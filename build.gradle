@@ -20,7 +20,12 @@ dependencies {
 	implementation 'org.apache.poi:poi:5.2.5'
 	implementation 'org.apache.poi:poi-ooxml:5.2.5'
 	implementation 'org.jsoup:jsoup:1.17.2'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation 'com.github.spullara.mustache.java:compiler:0.9.4'
+	// implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
 
 }
 
