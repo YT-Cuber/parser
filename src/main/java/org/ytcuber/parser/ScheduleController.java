@@ -2,7 +2,6 @@ package org.ytcuber.parser;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @Controller
 public class ScheduleController {
@@ -15,5 +14,15 @@ public class ScheduleController {
     @GetMapping("/test")
     public String test() {
         return "test";
+    }
+
+    @GetMapping("/start")
+    public String startPage() {
+        return "welcumPage";
+    }
+
+    @GetMapping("/nyan")
+    public String nyan() {
+        return "nyan";
     }
 }
