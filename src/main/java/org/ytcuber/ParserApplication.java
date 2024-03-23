@@ -10,8 +10,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.ytcuber.model.Lesson;
 import org.ytcuber.parser.ExcelProperties;
+import org.ytcuber.parser.TestParser;
 import org.ytcuber.repository.LessonRepository;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -23,6 +23,7 @@ public class ParserApplication {
 	public static void main(String[] args) throws IOException {
 //		new ParserApplication();
 		SpringApplication.run(ParserApplication.class, args);
+//		new TestParser().parse();
 	}
 
 	ParserApplication() throws IOException {

@@ -1,14 +1,17 @@
 package org.ytcuber.parser;
 
+import jakarta.annotation.PostConstruct;
+import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.ytcuber.model.Group;
 import org.ytcuber.repository.GroupRepository;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -17,16 +20,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Component
+public class Initialization {
 
-//@RequiredArgsConstructor
-//@NoArgsConstructor
-@Slf4j
-public class TestParser {
-
+    @Autowired
     private GroupRepository groupRepository;
 
-    public void parse() {
-        log.debug("e11rfreagre");
+    @PostConstruct
+    public void init(){
         try {
             // Указываем URL-адрес веб-страницы
             Document doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=1223699").get();
@@ -52,18 +55,22 @@ public class TestParser {
                     System.out.println(new String(title.getBytes(StandardCharsets.UTF_8)));
                     // System.out.println("Ссылка: " + link);
 
-//                    Group groups = new Group();
-//                    groups.setTitle(title);
-//                    groups.setSquad(2);
-//
-//                    groupRepository.save(groups);
-
                     // Скачиваем файл
                     try (InputStream in = new URL(link).openStream()) {
                         Files.copy(in, Path.of("C:/My_Space/More/Java/parser/mainexcel/squad2/" + title), StandardCopyOption.REPLACE_EXISTING);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+
+                    Group groups = new Group();
+                    if (title.endsWith(".xlsx")) {
+                        title = title.substring(0, title.length() - 5);
+                    }
+                    groups.setTitle(title);
+                    groups.setSquad(2);
+
+                    groupRepository.save(groups);
+
                 }
             }
         } catch (IOException e) {
@@ -71,3 +78,4 @@ public class TestParser {
         }
     }
 }
+
