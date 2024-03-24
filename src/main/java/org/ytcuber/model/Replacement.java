@@ -14,7 +14,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Lesson {
+public class Replacement {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,3 +29,4 @@ public class Lesson {
     @ManyToOne
     private Group group;
 }
+

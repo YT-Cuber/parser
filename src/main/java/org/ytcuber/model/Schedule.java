@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 @Data
@@ -24,6 +25,6 @@ public class Schedule {
     private String ordinal;
     private LocalTime starttime;
     private LocalTime endtime;
-    private String dayOfWeek;
+    private DayOfWeek dayOfWeek;
 
 }
