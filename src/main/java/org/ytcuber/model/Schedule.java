@@ -8,8 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.DayOfWeek;
+import org.ytcuber.types.DayOfWeek;
 import java.time.LocalTime;
 
 @Data

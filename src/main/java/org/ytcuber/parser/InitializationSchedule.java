@@ -1,4 +1,3 @@
-/*
 package org.ytcuber.parser;
 
 import jakarta.annotation.PostConstruct;
@@ -9,8 +8,10 @@ import org.springframework.stereotype.Component;
 import org.ytcuber.model.Schedule;
 import org.ytcuber.repository.ScheduleRepository;
 
-import java.time.DayOfWeek;
+import org.ytcuber.types.DayOfWeek;
+
 import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -22,9 +23,8 @@ public class InitializationSchedule {
 
     @PostConstruct
     public void init() {
-        String[] daysOfWeek = {"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"};
         String[][] weekdaySchedule = {
-                {"8:30", "10:10"},
+                {"08:30", "10:10"},
                 {"10:10", "11:40"},
                 {"12:20", "13:50"},
                 {"14:20", "15:50"},
@@ -33,7 +33,7 @@ public class InitializationSchedule {
                 {"19:20", "20:50"}
         };
         String[][] saturdaySchedule = {
-                {"8:30", "10:10"},
+                {"08:30", "10:10"},
                 {"10:10", "11:40"},
                 {"11:50", "13:20"},
                 {"13:30", "15:00"},
@@ -41,18 +41,26 @@ public class InitializationSchedule {
                 {"16:50", "18:20"}
         };
 
-        for (String day : daysOfWeek) {
-            String[][] daySchedule = day.equals("Суббота") ? saturdaySchedule : weekdaySchedule;
-            for (int i = 0; i < daySchedule.length; i++) {
-                Schedule schedule = new Schedule();
-                schedule.setOrdinal(Integer.toString(i + 1));
-                schedule.setStarttime(LocalTime.parse(daySchedule[i][0]));
-                schedule.setEndtime(LocalTime.parse(daySchedule[i][1]));
-                schedule.setDayOfWeek(DayOfWeek.valueOf(day));
+        DayOfWeek[] daysOfWeek = DayOfWeek.values();
 
-                scheduleRepository.save(schedule);
+        for (int i = 0; i < daysOfWeek.length; i++) {
+            String[][] daySchedule = daysOfWeek[i] == DayOfWeek.SATURDAY ? saturdaySchedule : weekdaySchedule;
+            for (int j = 0; j < daySchedule.length; j++) {
+                try {
+                    Schedule schedule = new Schedule();
+                    schedule.setOrdinal(Integer.toString(j + 1));
+                    schedule.setStarttime(LocalTime.parse(daySchedule[j][0]));
+                    schedule.setEndtime(LocalTime.parse(daySchedule[j][1]));
+                    schedule.setDayOfWeek(daysOfWeek[i]);
+
+                    scheduleRepository.save(schedule);
+                } catch (DateTimeParseException e) {
+                    System.err.println("Ошибка парсинга времени: " + e.getMessage());
+                    // Продолжаем выполнение или прерываем цикл в зависимости от вашего желания
+                }
             }
         }
     }
 }
-*/
+
+
