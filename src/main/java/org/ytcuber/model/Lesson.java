@@ -5,9 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import org.ytcuber.types.DayOfWeek;
-import java.time.LocalDate;
+
 
 @Data
 @Entity

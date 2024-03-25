@@ -3,6 +3,12 @@ package org.ytcuber.parser;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFTableColumn;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -12,6 +18,8 @@ import org.springframework.stereotype.Component;
 import org.ytcuber.model.Group;
 import org.ytcuber.repository.GroupRepository;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -19,6 +27,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -29,7 +39,7 @@ public class Initialization {
     private GroupRepository groupRepository;
 
     @PostConstruct
-    public void init(){
+    public void init() throws IOException {
         try {
             // Указываем URL-адрес веб-страницы
             Document doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=1223699").get();
@@ -76,6 +86,59 @@ public class Initialization {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        minusUnion("ИСпПК-21-1" + ".xlsx");
+        parseExcel("ИСпПК-21-1" + ".xlsx");
+    }
+
+
+    public void minusUnion(String file) {
+        String filePath = "./mainexcel/squad2/" + file;
+
+        List<Integer> columnsToUnmerge = Arrays.asList(0, 6, 12); // Столбцы A, G, M
+
+        try (FileInputStream fis = new FileInputStream(filePath)) {
+            Workbook workbook = WorkbookFactory.create(fis);
+            Sheet sheet = workbook.getSheetAt(0);
+
+            for (int i = 0; i < sheet.getNumMergedRegions(); i++) {
+                CellRangeAddress mergedRegion = sheet.getMergedRegion(i);
+                if (mergedRegion != null) {
+                    int firstRow = mergedRegion.getFirstRow();
+                    int lastRow = mergedRegion.getLastRow();
+                    int firstColumn = mergedRegion.getFirstColumn();
+                    int lastColumn = mergedRegion.getLastColumn();
+
+                    if (columnsToUnmerge.contains(firstColumn) && firstColumn == lastColumn) {
+                        // Убираем объединение только если ячейки объединены вертикально
+                        sheet.removeMergedRegion(i);
+                        for (int row = firstRow; row <= lastRow; row++) {
+                            Row r = sheet.getRow(row);
+                            Cell c = r.getCell(firstColumn);
+                            if (c == null) {
+                                c = r.createCell(firstColumn);
+                            }
+                        }
+                    }
+                }
+            }
+
+            try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                workbook.write(fos);
+            }
+            System.out.println();
+            System.out.println("Объединённые ячейки разъединены успешно.");
+            System.out.println();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void parseExcel(String file) throws IOException {
+        XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
+        XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
+        XSSFRow row2 = myExcelSheet.getRow(2);
+        System.out.println("!!! " + new String(row2.getCell(0).getStringCellValue().getBytes(StandardCharsets.UTF_8)));
+        System.out.println();
     }
 }
 
