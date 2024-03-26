@@ -19,7 +19,7 @@ public class Group {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String title;
-    private Integer squad;
+    private String title; // Название
+    private Integer squad; // Номер отделения
 
 }

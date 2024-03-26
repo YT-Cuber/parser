@@ -6,7 +6,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
-import org.ytcuber.model.Group;
 
 import java.io.IOException;
 import java.io.InputStream;

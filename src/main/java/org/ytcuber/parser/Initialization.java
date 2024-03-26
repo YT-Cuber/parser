@@ -5,10 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFTableColumn;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -30,6 +27,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.apache.poi.ss.util.CellUtil.getCell;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Component
@@ -39,7 +38,7 @@ public class Initialization {
     private GroupRepository groupRepository;
 
     @PostConstruct
-    public void init() throws IOException {
+    public void init() throws IOException, InterruptedException {
         try {
             // Указываем URL-адрес веб-страницы
             Document doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=1223699").get();
@@ -86,10 +85,13 @@ public class Initialization {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        minusUnion("ИСпПК-21-1" + ".xlsx");
-        parseExcel("ИСпПК-21-1" + ".xlsx");
+        String inputFile = "ИСпПК-21-1";
+        minusUnion(inputFile + ".xlsx");
+        minusUnion(inputFile + ".xlsx");
+        Thread.sleep(1000);
+        parseExcel(inputFile + ".xlsx");
+        Thread.sleep(2000);
     }
-
 
     public void minusUnion(String file) {
         String filePath = "./mainexcel/squad2/" + file;
@@ -109,7 +111,6 @@ public class Initialization {
                     int lastColumn = mergedRegion.getLastColumn();
 
                     if (columnsToUnmerge.contains(firstColumn) && firstColumn == lastColumn) {
-                        // Убираем объединение только если ячейки объединены вертикально
                         sheet.removeMergedRegion(i);
                         for (int row = firstRow; row <= lastRow; row++) {
                             Row r = sheet.getRow(row);
@@ -125,20 +126,24 @@ public class Initialization {
             try (FileOutputStream fos = new FileOutputStream(filePath)) {
                 workbook.write(fos);
             }
-            System.out.println();
-            System.out.println("Объединённые ячейки разъединены успешно.");
+            System.out.println("Объединённые ячейки разъединены успешно!");
             System.out.println();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void parseExcel(String file) throws IOException {
-        XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
-        XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
-        XSSFRow row2 = myExcelSheet.getRow(2);
-        System.out.println("!!! " + new String(row2.getCell(0).getStringCellValue().getBytes(StandardCharsets.UTF_8)));
-        System.out.println();
-    }
+        public void parseExcel(String file) throws IOException {
+            XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
+            XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
+            var row = 2;
+            var cell = 0;
+            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
+            cell = 1;
+            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
+            row = row + 1;
+            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
+            System.out.println();
+        }
 }
 

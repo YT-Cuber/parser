@@ -17,14 +17,15 @@ public class Lesson {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String odd;
-    private String ordinal;
-    private DayOfWeek datOfWeek;
-    private String subject;
-    private String teacher;
-    private String location;
+    private Long id; // ID
+    private Integer odd; // Чётная/Нечётная неделя
+    private Integer ordinal; // Номер пары
+    private DayOfWeek datOfWeek; // День недели
+    private String subject; // Предмет
+    private Integer subgroup; // Подгруппа
+    private String teacher; // Преподаватель
+    private String location; // Кабинет
 
     @ManyToOne
-    private Group group;
+    private Group group; // Название группы(ID)
 }
