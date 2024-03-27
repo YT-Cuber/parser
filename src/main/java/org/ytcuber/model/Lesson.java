@@ -19,8 +19,8 @@ public class Lesson {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // ID
     private Integer odd; // Чётная/Нечётная неделя
-    private Integer ordinal; // Номер пары
     private DayOfWeek datOfWeek; // День недели
+    private Integer ordinal; // Номер пары
     private String subject; // Предмет
     private Integer subgroup; // Подгруппа
     private String teacher; // Преподаватель

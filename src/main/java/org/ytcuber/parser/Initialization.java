@@ -5,7 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -13,7 +14,9 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.ytcuber.model.Group;
+import org.ytcuber.model.Lesson;
 import org.ytcuber.repository.GroupRepository;
+import org.ytcuber.repository.LessonRepository;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -27,8 +30,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.apache.poi.ss.util.CellUtil.getCell;
-
 @AllArgsConstructor
 @NoArgsConstructor
 @Component
@@ -36,6 +37,9 @@ public class Initialization {
 
     @Autowired
     private GroupRepository groupRepository;
+
+    @Autowired
+    private LessonRepository lessonRepository;
 
     @PostConstruct
     public void init() throws IOException, InterruptedException {
@@ -133,17 +137,30 @@ public class Initialization {
         }
     }
 
-        public void parseExcel(String file) throws IOException {
-            XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
-            XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
-            var row = 2;
-            var cell = 0;
+    public void parseExcel(String file) throws IOException {
+        int tmp = 0;
+        XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
+        XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
+        Lesson lesson = new Lesson();
+//        private Integer odd; // Чётная/Нечётная неделя
+//        private DayOfWeek datOfWeek; // День недели
+        int row = 3; // Нужно 3, чтобы правильно работала логика ниже, нужно чинить разделитель объединённых ячеек
+        int cell = 0;
+            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getNumericCellValue());
+        lesson.setOrdinal((int) myExcelSheet.getRow(row).getCell(cell).getNumericCellValue()); // Внесение Номер пары
+//        private Integer subgroup; // Подгруппа
+        cell = cell + 1;
             System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
-            cell = 1;
+        lesson.setSubject(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue())); // Внесение Предмет
+        row = row + 1;
             System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
-            row = row + 1;
+        lesson.setTeacher(myExcelSheet.getRow(row).getCell(cell).getStringCellValue()); // Внесение Преподаватель
+        cell = cell + 3 + tmp;
             System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
+        lesson.setLocation(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue()));
             System.out.println();
-        }
+        lessonRepository.save(lesson);
+
+    }
 }
 
