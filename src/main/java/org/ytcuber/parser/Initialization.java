@@ -17,6 +17,7 @@ import org.ytcuber.model.Group;
 import org.ytcuber.model.Lesson;
 import org.ytcuber.repository.GroupRepository;
 import org.ytcuber.repository.LessonRepository;
+import org.ytcuber.types.DayOfWeek;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -142,25 +143,61 @@ public class Initialization {
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
         Lesson lesson = new Lesson();
-//        private Integer odd; // Чётная/Нечётная неделя
-//        private DayOfWeek datOfWeek; // День недели
-        int row = 3; // Нужно 3, чтобы правильно работала логика ниже, нужно чинить разделитель объединённых ячеек
+        int row = 1;
         int cell = 0;
+
+            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
+        switch (myExcelSheet.getRow(row).getCell(cell).getStringCellValue()) {
+            case "Нечетная неделя" -> lesson.setOdd(1);
+            case "Четная неделя" -> lesson.setOdd(2);
+            default -> {
+                System.err.println("!");
+                System.err.println("Ошибка!");
+                System.err.println("Неделя не опознана!");
+                System.err.println("!");
+            }
+        }
+
+        row++;
+            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
+        switch (myExcelSheet.getRow(row).getCell(cell).getStringCellValue()) {
+            case "Понедельник" -> lesson.setDatOfWeek(DayOfWeek.MONDAY);
+            case "Вторник" -> lesson.setDatOfWeek(DayOfWeek.TUESDAY);
+            case "Среда" -> lesson.setDatOfWeek(DayOfWeek.WEDNESDAY);
+            case "Четверг" -> lesson.setDatOfWeek(DayOfWeek.THURSDAY);
+            case "Пятница" -> lesson.setDatOfWeek(DayOfWeek.FRIDAY);
+            case "Суббота" -> lesson.setDatOfWeek(DayOfWeek.SATURDAY);
+            default -> {
+                System.err.println("!");
+                System.err.println("Ошибка!");
+                System.err.println("День не опознан!");
+                System.err.println("!");
+            }
+        }
+
+        row++;
             System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getNumericCellValue());
         lesson.setOrdinal((int) myExcelSheet.getRow(row).getCell(cell).getNumericCellValue()); // Внесение Номер пары
 //        private Integer subgroup; // Подгруппа
-        cell = cell + 1;
+
+
+        cell++;
             System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
         lesson.setSubject(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue())); // Внесение Предмет
-        row = row + 1;
+
+        row++;
             System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
         lesson.setTeacher(myExcelSheet.getRow(row).getCell(cell).getStringCellValue()); // Внесение Преподаватель
+
         cell = cell + 3 + tmp;
             System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
         lesson.setLocation(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue()));
             System.out.println();
+
         lessonRepository.save(lesson);
 
     }
+
+
 }
 
