@@ -19,10 +19,7 @@ import org.ytcuber.repository.GroupRepository;
 import org.ytcuber.repository.LessonRepository;
 import org.ytcuber.types.DayOfWeek;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -30,9 +27,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-
-import static org.hibernate.sql.InFragment.NULL;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -144,16 +138,130 @@ public class Initialization {
     public void parseExcel(String file) throws IOException {
         int tmp = 0;
         int tmpSub = 1;
+        int odd = 0;
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
         Lesson lesson = new Lesson();
         int row = 1;
-        int cell = 6;
+        int cell = 0;
 
-            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
+        // Проверка недели
+        viewString(file, row, cell);
+        weekOdd(lesson, file, odd, row, cell);
+
+        row++;
+        // Проверка и внесение из enum дня
+        viewString(file, row, cell);
+        weekDay(lesson, file, row, cell);
+
+        row++;
+            viewNumeric(file, row, cell);
+            lesson.setOrdinal((int) myExcelSheet.getRow(row).getCell(cell).getNumericCellValue()); // Внесение Номер пары
+
+            cell++;
+            if (myExcelSheet.getRow(row).getCell(cell).getStringCellValue() != null) {
+                viewString(file, row, cell);
+                lesson.setSubject(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue())); // Внесение Предмет
+                String cellValue = myExcelSheet.getRow(row).getCell(cell).getStringCellValue();
+                cellVal(cellValue, lesson, tmpSub); // Проверка какая пара, Общая/Не Общая
+
+                initial(tmpSub, tmp); // Проверка инициализации подгруппы
+
+                row++;
+                viewString(file, row, cell);
+                lesson.setTeacher(myExcelSheet.getRow(row).getCell(cell).getStringCellValue()); // Внесение Преподаватель
+                cell = cell + 3 + tmp;
+                viewString(file, row, cell);
+                lesson.setLocation(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue())); // Внесение Кабинета
+                System.out.println();
+
+            } else {
+                tmpSub = 2;
+                lesson.setSubgroup(tmpSub);
+                cell = cell + 2;
+                viewString(file, row, cell);
+                lesson.setSubject(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue())); // Внесение Предмет
+                row++;
+                viewString(file, row, cell);
+                lesson.setTeacher(myExcelSheet.getRow(row).getCell(cell).getStringCellValue()); // Внесение Преподаватель
+                cell = cell + 3 + tmp;
+                viewString(file, row, cell);
+                lesson.setLocation(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue()));
+                System.out.println();
+
+            }
+            lessonRepository.save(lesson); // Сохранение в БД
+        lesson = new Lesson();
+
+        row++;
+        cell = cell - 4;
+
+        viewNumeric(file, row, cell);
+        lesson.setOrdinal((int) myExcelSheet.getRow(row).getCell(cell).getNumericCellValue()); // Внесение Номер пары
+
+        cell++;
+        if (myExcelSheet.getRow(row).getCell(cell).getStringCellValue() != null) {
+            viewString(file, row, cell);
+            lesson.setSubject(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue())); // Внесение Предмет
+
+            String cellValue = myExcelSheet.getRow(row).getCell(cell).getStringCellValue();
+            cellVal(cellValue, lesson, tmpSub); // Проверка какая пара, Общая/Не Общая
+
+            initial(tmpSub, tmp); // Проверка инициализации подгруппы
+
+            row++;
+            viewString(file, row, cell);
+            lesson.setTeacher(myExcelSheet.getRow(row).getCell(cell).getStringCellValue()); // Внесение Преподаватель
+
+            cell = cell + 1 + tmp;
+            viewString(file, row, cell);
+            lesson.setLocation(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue())); // Внесение Кабинета
+            System.out.println();
+
+        } else {
+            tmpSub = 2;
+            lesson.setSubgroup(tmpSub);
+            cell = cell + 2;
+            viewString(file, row, cell);
+            lesson.setSubject(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue())); // Внесение Предмет
+
+            row++;
+            viewString(file, row, cell);
+            lesson.setTeacher(myExcelSheet.getRow(row).getCell(cell).getStringCellValue()); // Внесение Преподаватель
+
+            cell = cell + 3 + tmp;
+            viewString(file, row, cell);
+            lesson.setLocation(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue()));
+            System.out.println();
+        }
+        lessonRepository.save(lesson); // Сохранение в БД
+
+    }
+
+    public void viewString(String file, int row, int cell) throws IOException {
+        XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
+        XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
+        System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
+    }
+
+    public void viewNumeric(String file, int row, int cell) throws IOException {
+        XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
+        XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
+        System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getNumericCellValue());
+    }
+
+    public int weekOdd(Lesson lesson, String file, int odd, int row, int cell) throws IOException {
+        XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
+        XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
         switch (myExcelSheet.getRow(row).getCell(cell).getStringCellValue()) {
-            case "Нечетная неделя" -> lesson.setOdd(1);
-            case "Четная неделя" -> lesson.setOdd(2);
+            case "Нечетная неделя" -> {
+                odd = 1;
+                lesson.setOdd(odd);
+            }
+            case "Четная неделя" -> {
+                odd = 2;
+                lesson.setOdd(odd);
+            }
             default -> {
                 System.err.println("!");
                 System.err.println("Ошибка!");
@@ -161,9 +269,12 @@ public class Initialization {
                 System.err.println("!");
             }
         }
+        return odd;
+    }
 
-        row++;
-            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
+    public void weekDay(Lesson lesson, String file, int row, int cell) throws IOException {
+        XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
+        XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
         switch (myExcelSheet.getRow(row).getCell(cell).getStringCellValue()) {
             case "Понедельник" -> lesson.setDatOfWeek(DayOfWeek.MONDAY);
             case "Вторник" -> lesson.setDatOfWeek(DayOfWeek.TUESDAY);
@@ -178,49 +289,44 @@ public class Initialization {
                 System.err.println("!");
             }
         }
+    }
 
-        row++;
-            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getNumericCellValue());
-        lesson.setOrdinal((int) myExcelSheet.getRow(row).getCell(cell).getNumericCellValue()); // Внесение Номер пары
-
-        cell++;
-        if (Objects.equals(myExcelSheet.getRow(row).getCell(cell).getStringCellValue(), NULL)) {
-            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
-            lesson.setSubject(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue())); // Внесение Предмет
-
-
-            String cellValue = myExcelSheet.getRow(row).getCell(cell).getStringCellValue();
-            switch (cellValue) {
-                case "(КП)", "(Лаб)", "(Пр)", "(Ин.яз)" -> lesson.setSubgroup(tmpSub);
-                default -> lesson.setSubgroup(0);
+    public int cellVal(String cellValue, Lesson lesson, int tmpSub) {
+        switch (cellValue) {
+            case "(КП)", "(Лаб)", "(Пр)", "(Ин.яз)" -> {
+                lesson.setSubgroup(tmpSub);
+                tmpSub = 1;
+                return tmpSub;
             }
-
-            row++;
-            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
-            lesson.setTeacher(myExcelSheet.getRow(row).getCell(cell).getStringCellValue()); // Внесение Преподаватель
-
-            cell = cell + 3 + tmp;
-            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
-            lesson.setLocation(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue()));
-            System.out.println();
-
-            lessonRepository.save(lesson);
-        } else {
-            cell = cell + 2;
-            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
-            lesson.setSubject(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue())); // Внесение Предмет
-
-            row++;
-            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
-            lesson.setTeacher(myExcelSheet.getRow(row).getCell(cell).getStringCellValue()); // Внесение Преподаватель
-
-            cell = cell + 3 + tmp;
-            System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
-            lesson.setLocation(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue()));
-            System.out.println();
-
-            lessonRepository.save(lesson);
+            default -> {
+                lesson.setSubgroup(0);
+                tmpSub = 0;
+                return tmpSub;
+            }
         }
+    }
+
+    public int initial(int tmpSub, int tmp) {
+        switch (tmpSub) {
+            case 0 -> {
+                tmp = 2;
+                return tmp;
+            }
+            case 1 -> {
+                tmp = 0;
+                return tmp;
+            }
+            case 2 -> {
+                tmp = 2;
+                return tmp;
+            }
+            default -> {
+                System.err.println("! ОШИБКА ИНИЦИАЛИЗАЦИИ ! ");
+                System.err.println("! ОШИБКА ! ");
+                System.err.println("! ОШИБКА ИНИЦИАЛИЗАЦИИ ! ");
+            }
+        }
+        return tmpSub;
     }
 }
 
