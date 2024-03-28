@@ -69,6 +69,7 @@ public class Initialization {
 
                 if (startPrinting && !title.endsWith(".pdf")) {
                     System.out.println(new String(title.getBytes(StandardCharsets.UTF_8)));
+                    System.out.println();
                     // System.out.println("Ссылка: " + link);
 
                     // Скачиваем файл
@@ -153,42 +154,67 @@ public class Initialization {
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
         int rowId = 1;
-        int cellId = 6;
-
-
-//        for (int i = 1; i <= 3; i++) {
+        int cellId = 0;
 
         Lesson lesson = new Lesson();
 
-        // Проверка недели
-        viewString(file, rowId, cellId);
-        weekOdd(lesson, file, odd, rowId, cellId);
+//        for (int i = 1; i <= 3; i++) {
+            // Проверка недели
+            viewString(file, rowId, cellId);
+            weekOdd(lesson, file, odd, rowId, cellId);
+            int tmpDay = 1;
+            while (tmpDay <= 2) {
+                rowId++;
+                // Проверка и внесение из enum дня
+                viewString(file, rowId, cellId);
 
-        rowId++;
-        // Проверка и внесение из enum дня
-        viewString(file, rowId, cellId);
-        weekDay(lesson, file, rowId, cellId);
+                weekDay(lesson, file, rowId, cellId);
 
-        rowId++;
-        boolean test = false;
-        while (!test) {
-            viewNumeric(file, rowId, cellId);
-            lesson.setOrdinal((int) myExcelSheet.getRow(rowId).getCell(cellId).getNumericCellValue()); // Внесение Номер пары
-            int para = (int) myExcelSheet.getRow(rowId).getCell(cellId).getNumericCellValue(); // Запоминание пары
-            logicalAll(file, lesson, rowId, cellId, tmpSub, para);
-            lesson = new Lesson();
-            rowId = rowId + 2;
-//            lessonsList.add(lesson);
+                rowId++;
+                boolean tmpLes = false;
+                while (!tmpLes) {
+                    viewNumeric(file, rowId, cellId);
+                    lesson.setOrdinal((int) myExcelSheet.getRow(rowId).getCell(cellId).getNumericCellValue()); // Внесение Номер пары
+                    int para = (int) myExcelSheet.getRow(rowId).getCell(cellId).getNumericCellValue(); // Запоминание пары
+                    logicalAll(file, lesson, rowId, cellId, tmpSub, para);
+                    lesson = new Lesson();
+                    rowId = rowId + 2;
 
-            Cell cell = myExcelSheet.getRow(rowId).getCell(cellId);
-            DayOfWeek dayOfWeek = parseDayOfWeek(cell);
+                    Cell cell = myExcelSheet.getRow(rowId).getCell(cellId);
+                    DayOfWeek dayOfWeek = parseDayOfWeek(cell);
 
-            if (cell == null) {
-                test = true;
-            } else if (dayOfWeek != null) {
-                test = true;
+                    if (cell == null) {
+                        tmpLes = true;
+                    } else if (dayOfWeek != null) {
+                        tmpLes = true;
+                    }
+                }
+                tmpLes = true;
+                while (tmpLes) { // Проверка, что там написан день недели или Тип недели
+                    Row row = myExcelSheet.getRow(rowId);
+
+                    if (row == null) {
+                        rowId++;
+                        continue;
+                    }
+
+                    Cell cell = row.getCell(cellId);
+                    DayOfWeek dayOfWeek = parseDayOfWeek(cell);
+                    boolean isOddWeek = parseOddWeek(cell);
+
+                    if (!isOddWeek) {
+                        tmpLes = false;
+                    } else if (dayOfWeek != null) {
+                        tmpLes = false;
+                    } else {
+                        rowId += 2;
+                    }
+                }
+                tmpDay++;
+                rowId--;
             }
-        }
+//     lessonsList.add(lesson);
+//        }
         return lessonsList;
     }
 
@@ -204,6 +230,16 @@ public class Initialization {
             case "Пятница" -> DayOfWeek.FRIDAY;
             case "Суббота" -> DayOfWeek.SATURDAY;
             default -> null;
+        };
+    }
+
+    public boolean parseOddWeek(Cell cell) {
+        if (cell == null) return true;
+
+        return switch (cell.getStringCellValue()) {
+            case "Нечетная неделя" -> false;
+            case "Четная неделя" -> false;
+            default -> true;
         };
     }
 
