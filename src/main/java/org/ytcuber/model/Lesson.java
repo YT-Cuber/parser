@@ -19,7 +19,7 @@ public class Lesson {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // ID
     private Integer odd; // Чётная/Нечётная неделя
-    private DayOfWeek datOfWeek; // День недели
+    private DayOfWeek dayOfWeek; // День недели
     private Integer ordinal; // Номер пары
     private String subject; // Предмет
     private Integer subgroup; // Подгруппа
@@ -28,4 +28,12 @@ public class Lesson {
 
     @ManyToOne
     private Group group; // Название группы(ID)
+
+//    public Lesson(String subject) {
+//        this.subject = subject;
+//    }
+
+    public String getSubject() {
+        return subject;
+    }
 }

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <title>Расписание пар</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid black;
+      padding: 10px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+<h1>Расписание пар</h1>
+<table>
+  <tr>
+    <th>День недели</th>
+    <th>Номер пары</th>
+    <th>Предмет</th>
+    <th>Преподаватель</th>
+    <th>Кабинет</th>
+  </tr>
+  <tr th:each="lesson : ${lessons}">
+    <td th:text="${lesson.getDayOfWeek()}"></td>
+    <td th:text="${lesson.ordinal} + ' пара'"></td>
+    <td th:text="${lesson.subject}"></td>
+    <td th:text="${lesson.teacher}"></td>
+    <td th:text="${lesson.location}"></td>
+  </tr>
+</table>
+</body>
+</html>
