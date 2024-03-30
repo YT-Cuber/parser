@@ -1,30 +1,43 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+  <link href='https://fonts.googleapis.com/css?family=Comfortaa' rel='stylesheet'>
   <title>Расписание пар</title>
   <style>
+    body {
+      font-family: 'Comfortaa', serif;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
+      font-family: 'Comfortaa', serif;
     }
     th, td {
       border: 1px solid black;
       padding: 10px;
       text-align: left;
+      font-family: 'Comfortaa', serif;
     }
   </style>
+  <script>
+
+  </script>
 </head>
 <body>
-<h1>Расписание пар</h1>
+<h1>Расписание пар для ИСпПК-21-1</h1>
+<div id="currentWeek"></div>
 <table>
+  <h2> 1 подгруппа</h2>
   <tr>
+    <th>Неделя</th>
     <th>День недели</th>
     <th>Номер пары</th>
     <th>Предмет</th>
     <th>Преподаватель</th>
     <th>Кабинет</th>
   </tr>
-  <tr th:each="lesson : ${lessons}">
+  <tr th:each="lesson : ${lessons}" th:if="${lesson.getSubgroup() == 0 or lesson.getSubgroup() == 1}">
+    <td th:text="${lesson.getOdd() == 2 ? 'Чётная' : 'Нечётная'}"></td>
     <td th:text="${lesson.getDayOfWeek()}"></td>
     <td th:text="${lesson.ordinal} + ' пара'"></td>
     <td th:text="${lesson.subject}"></td>
@@ -32,5 +45,6 @@
     <td th:text="${lesson.location}"></td>
   </tr>
 </table>
+</div>
 </body>
 </html>

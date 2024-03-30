@@ -101,8 +101,10 @@ public class ScheduleController {
     }
 
     @PostMapping ("/start")
-    public String startPageP() {
-        return "nyan";
+    public String startPageP(Model model) {
+        List<Lesson> lessons = lessonRepository.findAll();
+        model.addAttribute("lessons",lessons);
+        return "lessons";
     }
 
     @GetMapping("/nyan")
