@@ -33,7 +33,7 @@ public class InitializationReplacement {
                 String title = element.text(); // Название файла
                 String link = element.absUrl("href"); // Ссылка на скачивание файла
 
-                if (link.equals("https://newlms.magtu.ru/pluginfile.php/1936755/mod_folder/content/0/18.03.24-20.03.24.xlsx?forcedownload=1")) {
+                if (link.equals("https://newlms.magtu.ru/pluginfile.php/1936755/mod_folder/content/0/10-30-259_%20%D0%BF%D1%80%D0%B8%D0%BA%D0%B0%D0%B7%20%D0%BD%D0%B0%201%20%D0%B8%209%20%D0%BC%D0%B0%D1%8F.pdf?forcedownload=1")) {
                     startPrinting = true;
                 }
 

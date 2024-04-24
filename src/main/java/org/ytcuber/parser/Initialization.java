@@ -153,6 +153,9 @@ public class Initialization {
         int rowId = 1;
         int cellId = 0;
         int u = 1;
+        int tmpDay = 1;
+        int tmpLog = 0;
+        int isWeekOdd = 0;
         DayOfWeek datOfWeek;
 
         Lesson lesson = new Lesson();
@@ -160,13 +163,10 @@ public class Initialization {
         DayOfWeek dayOfWeek;
 
         for (int i = 1; i <= 3; i++) {
-
             while (u <= 2) {
                 // Проверка недели
 //                viewString(file, rowId, cellId);
                 weekOdd = weekOdd(file, odd, rowId);
-
-                int tmpDay = 1;
 
                 while (tmpDay <= 2) {
                     rowId++;
@@ -191,7 +191,7 @@ public class Initialization {
                         rowId += 2;
 
                         Row rowT = myExcelSheet.getRow(rowId);
-                        Cell cell = null; // Ошибка
+                        Cell cell = null;
                         if (rowT != null) {
                             cell = rowT.getCell(cellId);
                         }
@@ -209,11 +209,25 @@ public class Initialization {
                             Row row = myExcelSheet.getRow(rowId);
 
                             if (row == null) {
+                                if (tmpLog == 10) {
+                                    break;
+                                }
                                 rowId++;
+                                isWeekOdd = weekOdd(file, odd, rowId); // Проверка на неделю !!!
+                                if (isWeekOdd == 1 && i == 2 || isWeekOdd == 2 && i == 2 || isWeekOdd == 1 && i == 3 || isWeekOdd == 2 && i == 3) {
+                                    rowId++;
+                                    break;
+                                }
+                                tmpLog++;
                                 continue;
                             }
 
-                            Cell cell = row.getCell(cellId);
+                            Row rowT = myExcelSheet.getRow(rowId);
+                            Cell cell = null;
+                            if (rowT != null) {
+                                cell = rowT.getCell(cellId);
+                            }
+
                             dayOfWeek = parseDayOfWeek(cell);
 
                             boolean isOddWeek = parseOddWeek(cell);
@@ -231,15 +245,20 @@ public class Initialization {
                     tmpDay++;
                     rowId--;
                 }
+                tmpDay = 1;
                 u++;
             }
+            cellId += 6;
+            u = 1;
+            tmpDay = 1;
+            rowId = 1;
+            tmpLog = 0;
 //     lessonsList.add(lesson);
         }
         return lessonsList;
     }
 
     public DayOfWeek parseDayOfWeek(Cell cell) {
-
         if (cell == null || cell.getCellType() != CellType.STRING) return null;
 
         return switch (cell.getStringCellValue()) {
@@ -266,6 +285,7 @@ public class Initialization {
 
     public boolean parseOddWeek(Cell cell) {
         if (cell == null) return true;
+//        if (cell.getCellType() == CellType.NUMERIC) return false;
 
         return switch (cell.getStringCellValue()) {
             case "Нечетная неделя" -> false;
@@ -381,18 +401,6 @@ public class Initialization {
         lessonRepository.save(lesson);
     }
 
-//    public void viewString(String file, int row, int cell) throws IOException {
-//        XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
-//        XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
-//        System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
-//    }
-
-//    public void viewNumeric(String file, int row, int cell) throws IOException {
-//        XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
-//        XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
-//        System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getNumericCellValue());
-//    }
-
     public int weekOdd(String file, int odd, int row) throws IOException {
         int cell = 0;
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
@@ -453,3 +461,14 @@ public class Initialization {
 //    }
 }
 
+//    public void viewString(String file, int row, int cell) throws IOException {
+//        XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
+//        XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
+//        System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getStringCellValue());
+//    }
+
+//    public void viewNumeric(String file, int row, int cell) throws IOException {
+//        XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
+//        XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
+//        System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getNumericCellValue());
+//    }
