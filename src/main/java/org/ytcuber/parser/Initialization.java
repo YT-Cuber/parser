@@ -164,7 +164,7 @@ public class Initialization {
             while (u <= 2) {
                 // Проверка недели
 //                viewString(file, rowId, cellId);
-                weekOdd = weekOdd(file, odd, rowId, cellId);
+                weekOdd = weekOdd(file, odd, rowId);
 
                 int tmpDay = 1;
 
@@ -174,6 +174,7 @@ public class Initialization {
 //                    viewString(file, rowId, cellId);
                     dayOfWeek = weekDay(file, rowId, cellId);
                     datOfWeek = weekDay(file, rowId, cellId);
+                    boolean isEndDayOfWeek = endDayOfWeek(datOfWeek, u);
 
                     rowId++;
                     boolean tmpLes = false;
@@ -189,7 +190,12 @@ public class Initialization {
                         lesson = new Lesson();
                         rowId += 2;
 
-                        Cell cell = myExcelSheet.getRow(rowId).getCell(cellId);
+                        Row rowT = myExcelSheet.getRow(rowId);
+                        Cell cell = null; // Ошибка
+                        if (rowT != null) {
+                            cell = rowT.getCell(cellId);
+                        }
+
                         dayOfWeek = parseDayOfWeek(cell);
 
                         if (cell == null) {
@@ -198,8 +204,7 @@ public class Initialization {
                             tmpLes = true;
                         }
                     }
-                    boolean isEndDayOfWeek = endDayOfWeek(datOfWeek);
-//                    if (u <= 2 && isEndDayOfWeek) {
+                    if (!isEndDayOfWeek) {
                         while (tmpLes) { // Проверка, что там написан день недели или Тип недели
                             Row row = myExcelSheet.getRow(rowId);
 
@@ -211,7 +216,6 @@ public class Initialization {
                             Cell cell = row.getCell(cellId);
                             dayOfWeek = parseDayOfWeek(cell);
 
-//                    boolean isOddWeek = cell % 2 != 0;
                             boolean isOddWeek = parseOddWeek(cell);
 
                             if (!isOddWeek) {
@@ -223,11 +227,11 @@ public class Initialization {
                                 rowId += 2;
                             }
                         }
-                        tmpDay++;
-                        rowId--;
                     }
-//                }
-//                u++;
+                    tmpDay++;
+                    rowId--;
+                }
+                u++;
             }
 //     lessonsList.add(lesson);
         }
@@ -249,11 +253,15 @@ public class Initialization {
         };
     }
 
-    public boolean endDayOfWeek(DayOfWeek dayOfWeek) {
-        return switch (dayOfWeek) {
-            case THURSDAY, FRIDAY, SATURDAY -> false;
-            default -> true;
-        };
+    public boolean endDayOfWeek(DayOfWeek datOfWeek, int u) {
+        if (u == 2) {
+            return switch (datOfWeek) {
+                case THURSDAY, FRIDAY, SATURDAY -> true;
+                default -> false;
+            };
+        } else {
+            return false;
+        }
     }
 
     public boolean parseOddWeek(Cell cell) {
@@ -385,7 +393,8 @@ public class Initialization {
 //        System.out.println("!!! " + myExcelSheet.getRow(row).getCell(cell).getNumericCellValue());
 //    }
 
-    public int weekOdd(String file, int odd, int row, int cell) throws IOException {
+    public int weekOdd(String file, int odd, int row) throws IOException {
+        int cell = 0;
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream("./mainexcel/squad2/" + file));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
         switch (myExcelSheet.getRow(row).getCell(cell).getStringCellValue()) {
