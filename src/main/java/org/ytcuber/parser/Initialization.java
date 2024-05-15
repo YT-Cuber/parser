@@ -3,6 +3,7 @@ package org.ytcuber.parser;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import lombok.Value;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -45,49 +46,61 @@ public class Initialization {
     public void init() throws IOException, InterruptedException {
         try {
             // Указываем URL-адрес веб-страницы
-            Document doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=1223699").get();
-            String startLink = "https://newlms.magtu.ru/pluginfile.php/1936752/mod_folder/content/0/%D0%98%D0%A1%D0%BF%D0%92-20-1.pdf?forcedownload=1";
+            Document doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=219208").get();
+            String startLink = "https://newlms.magtu.ru/pluginfile.php/622195/mod_folder/content/0/%D0%98%D0%A1%D0%BF%D0%92-20-1%2C%20%D0%B4%D0%98%D0%A1%D0%BF%D0%92-20.pdf?forcedownload=1";
             String lastLink = "◄ ОТДЕЛЕНИЕ № 1 «ОБЩЕОБРАЗОВАТЕЛЬНАЯ ПОДГОТОВКА»";
             String filePath = "C:/My_Space/More/Java/parser/mainexcel/squad2/";
             sqads(doc, startLink, lastLink, filePath);
 
             // Указываем URL-адрес веб-страницы
-            doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=1223698").get();
-            startLink = "https://newlms.magtu.ru/pluginfile.php/1936751/mod_folder/content/0/%D0%90%D0%A2%D0%BF-23-1.pdf?forcedownload=1";
-            lastLink = "◄ ДОП";
+            doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=219213").get();
+            startLink = "https://newlms.magtu.ru/pluginfile.php/622200/mod_folder/content/0/%D0%90%D0%A2%D0%BF-23-1.pdf?forcedownload=1";
+            lastLink = "◄ 5 КУРС";
             filePath = "C:/My_Space/More/Java/parser/mainexcel/squad1/";
             sqads(doc, startLink, lastLink, filePath);
 
             // Указываем URL-адрес веб-страницы
-            doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=1223700").get();
-            startLink = "https://newlms.magtu.ru/pluginfile.php/1936753/mod_folder/content/0/%D0%94%D0%B0%D0%9A-21-1.pdf?forcedownload=1";
+            doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=219206").get();
+            startLink = "https://newlms.magtu.ru/pluginfile.php/622193/mod_folder/content/0/%D0%94%D0%B0%D0%9A-21-1.pdf?forcedownload=1";
             lastLink = "◄ ОТДЕЛЕНИЕ № 2 «ИНФОРМАЦИОННЫЕ ТЕХНОЛОГИИ И ТРАНСПОРТ»";
             filePath = "C:/My_Space/More/Java/parser/mainexcel/squad3/";
             sqads(doc, startLink, lastLink, filePath);
 
             // Указываем URL-адрес веб-страницы
-            doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=1223701").get();
-            startLink = "https://newlms.magtu.ru/pluginfile.php/1936754/mod_folder/content/0/%D0%90%D0%A2%D0%BF-20-1.pdf?forcedownload=1";
-            lastLink = "◄ ОТДЕЛЕНИЕ № 3 «Строительство, экономика и сфера обслуживания»";
+            doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=219205").get();
+            startLink = "https://newlms.magtu.ru/pluginfile.php/622192/mod_folder/content/0/%D0%90%D0%A2%D0%BF-20-1.pdf?forcedownload=1";
+            lastLink = "◄ ОТДЕЛЕНИЕ № 3 «СТРОИТЕЛЬСТВО, ЭКОНОМИКА И СФЕРА ОБСЛУЖИВАНИЯ>";
             filePath = "C:/My_Space/More/Java/parser/mainexcel/squad4/";
             sqads(doc, startLink, lastLink, filePath);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-        String inputFile = "ИСпП-23-1";
-        String inputFilePath = "C:/My_Space/More/Java/parser/mainexcel/squad1/" + inputFile + ".xlsx";
+        String inputFile = "ИСпПК-21-1";
+        Long groupid = 1L;
+        String inputFilePath = "C:/My_Space/More/Java/parser/mainexcel/squad2/" + inputFile + ".xlsx";
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
         minusUnion(inputFilePath, myExcelSheet);
         minusUnion(inputFilePath, myExcelSheet);
         Thread.sleep(1000);
 
-        List<Lesson> lessonsList = parseExcel(inputFilePath, myExcelSheet);
+        List<Lesson> lessonsList = parseExcel(inputFilePath, myExcelSheet, groupid);
+
+//        inputFile = "ИСпПК-21-1";
+//        groupid = 12L;
+//        inputFilePath = "C:/My_Space/More/Java/parser/mainexcel/squad2/" + inputFile + ".xlsx";
+//        myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
+//        myExcelSheet = myExcelBook.getSheetAt(0);
+//        minusUnion(inputFilePath, myExcelSheet);
+//        minusUnion(inputFilePath, myExcelSheet);
+//        Thread.sleep(1000);
+//
+//        lessonsList = parseExcel(inputFilePath, myExcelSheet, groupid);
 
         lessonRepository.saveAllAndFlush(lessonsList);
 
-        Thread.sleep(2000);
+        Thread.sleep(500);
     }
 
     public void sqads(Document doc, String startLink, String lastLink, String filePath) {
@@ -172,7 +185,7 @@ public class Initialization {
         }
     }
 
-    public List<Lesson> parseExcel(String file, XSSFSheet myExcelSheet) throws IOException {
+    public List<Lesson> parseExcel(String file, XSSFSheet myExcelSheet, Long groupid) throws IOException {
         int tmpSub = 1;
         int odd = 0;
         final List<Lesson> lessonsList = new ArrayList<>();
@@ -183,6 +196,8 @@ public class Initialization {
         int tmpLog = 0;
         int isWeekOdd;
         DayOfWeek datOfWeek;
+
+        // Проверка на начало Рассписания Группы
 
         Lesson lesson = new Lesson();
         int weekOdd;
@@ -212,7 +227,7 @@ public class Initialization {
                         lesson.setOdd(weekOdd);
                         lesson.setDayOfWeek(datOfWeek);
 
-                        logicalAll(file, lesson, rowId, cellId, tmpSub, para, weekOdd, datOfWeek, myExcelSheet);
+                        logicalAll(file, lesson, rowId, cellId, tmpSub, para, weekOdd, datOfWeek, myExcelSheet, groupid);
                         lesson = new Lesson();
                         rowId += 2;
 
@@ -284,6 +299,8 @@ public class Initialization {
         return lessonsList;
     }
 
+// Логика написания id группы
+
     public DayOfWeek parseDayOfWeek(Cell cell) {
         if (cell == null || cell.getCellType() != CellType.STRING) return null;
 
@@ -320,12 +337,15 @@ public class Initialization {
         };
     }
 
-    public void logicalAll(String file, Lesson lesson, int row, int cell, int tmpSub, int para1, int weekOdd, DayOfWeek datOfWeek, XSSFSheet myExcelSheet) throws IOException {
+    public void logicalAll(String file, Lesson lesson, int row, int cell, int tmpSub, int para1, int weekOdd, DayOfWeek datOfWeek, XSSFSheet myExcelSheet, Long groupid) throws IOException {
         cell++;
+        lesson.setGroup(groupRepository.findById(groupid).get());
         if (!Objects.equals(myExcelSheet.getRow(row).getCell(cell).getStringCellValue(), "")) {
 
             String cellValue = myExcelSheet.getRow(row).getCell(cell).getStringCellValue();
-            tmpSub = cellVal(cellValue, tmpSub); // Проверка какая пара, Общая/Не Общая
+            String cellValue2 = myExcelSheet.getRow(row).getCell(cell + 2).getStringCellValue();
+            String cellValue3 = myExcelSheet.getRow(row + 1).getCell(cell + 3).getStringCellValue();
+            tmpSub = cellVal(cellValue, tmpSub, cellValue2, cellValue3); // Проверка какая пара, Общая/Не Общая
             if (tmpSub == 0) {
                 lesson.setSubgroup(tmpSub);
 //                viewString(file, row, cell);
@@ -342,17 +362,17 @@ public class Initialization {
 
                 lessonRepository.save(lesson);
             } else {
-                logicalSub1(file, lesson, row, cell, para1, weekOdd, datOfWeek, myExcelSheet);
+                logicalSub1(file, lesson, row, cell, para1, weekOdd, datOfWeek, myExcelSheet, groupid);
             }
 
         } else {
             cell += 2;
-            logicalSub2(file, lesson, row, cell, para1, weekOdd, datOfWeek, myExcelSheet);
+            logicalSub2(file, lesson, row, cell, para1, weekOdd, datOfWeek, myExcelSheet, groupid);
         }
 
     }
 
-    public void logicalSub1(String file, Lesson lesson, int row, int cell, int para, int weekOdd, DayOfWeek datOfWeek, XSSFSheet myExcelSheet) throws IOException {
+    public void logicalSub1(String file, Lesson lesson, int row, int cell, int para, int weekOdd, DayOfWeek datOfWeek, XSSFSheet myExcelSheet, Long groupid) throws IOException {
         if (!Objects.equals(myExcelSheet.getRow(row).getCell(cell).getStringCellValue(), "")) {
             lesson.setSubgroup(1);
 
@@ -373,17 +393,18 @@ public class Initialization {
 
             cell++;
             row--;
-            logicalSub2(file, lesson, row, cell, para, weekOdd, datOfWeek, myExcelSheet);
+            logicalSub2(file, lesson, row, cell, para, weekOdd, datOfWeek, myExcelSheet, groupid);
         } else {
             cell += 2;
-            logicalSub2(file, lesson, row, cell, para, weekOdd, datOfWeek, myExcelSheet);
+            logicalSub2(file, lesson, row, cell, para, weekOdd, datOfWeek, myExcelSheet, groupid);
         }
     }
 
-    public void logicalSub2(String file, Lesson lesson, int row, int cell, int para, int weekOdd, DayOfWeek datOfWeek, XSSFSheet myExcelSheet) throws IOException {
+    public void logicalSub2(String file, Lesson lesson, int row, int cell, int para, int weekOdd, DayOfWeek datOfWeek, XSSFSheet myExcelSheet, Long groupid) throws IOException {
 
         lesson = new Lesson();
         if (!Objects.equals(myExcelSheet.getRow(row).getCell(cell).getStringCellValue(), "")) {
+            lesson.setGroup(groupRepository.findById(groupid).get());
             lesson.setOdd(weekOdd);
             lesson.setDayOfWeek(datOfWeek);
 
@@ -443,8 +464,16 @@ public class Initialization {
         return DayOfWeek.valueOfLabel(weekDayRawValue);
     }
 
-    public int cellVal(String cellValue, int tmpSub) {
-        if (cellValue.startsWith("(КП)") | cellValue.startsWith("(Лаб)") | cellValue.startsWith("(Пр)") | cellValue.startsWith("Ин.яз")) {
+    public int cellVal(String cellValue, int tmpSub, String cellValue2, String cellValue3) {
+        if (cellValue.startsWith("(КП)") || cellValue.startsWith("(Лаб)") || cellValue.startsWith("(Пр)") || cellValue.startsWith("Ин.яз")) {
+            if (cellValue2 == null || cellValue2.isEmpty() || cellValue2 == "") {
+                if (cellValue3.isEmpty() || cellValue3 == null || cellValue3 == "") {
+                    tmpSub = 1;
+                } else {
+                    tmpSub = 0;
+                }
+                tmpSub = 1;
+            }
             tmpSub = 1;
         } else {
             tmpSub = 0;

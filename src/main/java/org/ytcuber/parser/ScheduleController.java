@@ -29,14 +29,8 @@ public class ScheduleController {
 
     @PostMapping("/start")
     public String startPageP(@RequestParam("subgroup") int subgroup, Model model) {
-        List<Lesson> lessonsForSelectedSubgroup = lessonRepository.findBySubgroup(subgroup);
-        List<Lesson> lessonsForSubgroup0 = lessonRepository.findBySubgroup(0);
-
-        List<Lesson> combinedLessons = new ArrayList<>();
-        combinedLessons.addAll(lessonsForSelectedSubgroup);
-        combinedLessons.addAll(lessonsForSubgroup0);
-
-        model.addAttribute("lessons", combinedLessons);
+        List<Lesson> lessonsForSelectedSubgroup = lessonRepository.getLessons(subgroup);
+        model.addAttribute("lessons", lessonsForSelectedSubgroup);
         return "lessons";
     }
 

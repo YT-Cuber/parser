@@ -4,15 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Выбор Группы</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            font-weight: bold;
+        }
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
 <form method="post" action="/start">
-    <label for="group-number">Номер группы:</label><br>
+    <label for="group-number">Введите номер группы:</label><br>
     <input type="text" id="group-number" name="group-number"><br>
-    <label for="subgroup">Подгруппа:</label><br>
+    <label for="subgroup">Выберите подгруппу:</label><br>
     <select id="subgroup" name="subgroup">
-        <option value="1">1</option>
-        <option value="2">2</option>
+        <option value="1">Подгруппа 1</option>
+        <option value="2">Подгруппа 2</option>
     </select><br>
     <input type="submit" value="Отправить">
 </form>

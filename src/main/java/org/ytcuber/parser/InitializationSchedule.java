@@ -48,7 +48,7 @@ public class InitializationSchedule {
             for (int j = 0; j < daySchedule.length; j++) {
                 try {
                     Schedule schedule = new Schedule();
-                    schedule.setOrdinal(Integer.toString(j + 1));
+                    schedule.setOrdinal(j + 1);
                     schedule.setStarttime(LocalTime.parse(daySchedule[j][0]));
                     schedule.setEndtime(LocalTime.parse(daySchedule[j][1]));
                     schedule.setDayOfWeek(daysOfWeek[i]);

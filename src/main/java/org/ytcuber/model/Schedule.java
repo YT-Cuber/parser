@@ -21,7 +21,7 @@ public class Schedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String ordinal; // Номер пары
+    private Integer ordinal; // Номер пары
     private LocalTime starttime;
     private LocalTime endtime;
     private DayOfWeek dayOfWeek;
