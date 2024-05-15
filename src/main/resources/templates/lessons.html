@@ -27,7 +27,7 @@
 <h1>Расписание пар для ИСпПК-21-1</h1>
 <div id="currentWeek"></div>
 <table>
-  <h2> 1 подгруппа</h2>
+  <h2> N подгруппа</h2>
   <tr>
     <th>Неделя</th>
     <th>День недели</th>
@@ -36,7 +36,7 @@
     <th>Преподаватель</th>
     <th>Кабинет</th>
   </tr>
-  <tr th:each="lesson : ${lessons}" th:if="${lesson.getSubgroup() == 0 or lesson.getSubgroup() == 1}">
+  <tr th:each="lesson : ${lessons}">
     <td th:text="${lesson.getOdd() == 2 ? 'Чётная' : 'Нечётная'}"></td>
     <td th:text="${lesson.getDayOfWeek()}"></td>
     <td th:text="${lesson.ordinal} + ' пара'"></td>

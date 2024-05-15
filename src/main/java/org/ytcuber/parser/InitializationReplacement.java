@@ -1,12 +1,16 @@
 package org.ytcuber.parser;
 
 import jakarta.annotation.PostConstruct;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -14,12 +18,17 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.List;
+import org.ytcuber.parser.Initialization;
 
 @Component
 public class InitializationReplacement {
 
     @PostConstruct
     public void init(){
+        String title;
+        String link;
         try {
             // Указываем URL-адрес веб-страницы
             Document doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=1223702").get();
@@ -30,8 +39,8 @@ public class InitializationReplacement {
             boolean startPrinting = false;
             // Перебираем все извлеченные элементы и выводим их на экран
             for (Element element : elements) {
-                String title = element.text(); // Название файла
-                String link = element.absUrl("href"); // Ссылка на скачивание файла
+                title = element.text(); // Название файла
+                link = element.absUrl("href"); // Ссылка на скачивание файла
 
                 if (link.equals("https://newlms.magtu.ru/pluginfile.php/1936755/mod_folder/content/0/10-30-259_%20%D0%BF%D1%80%D0%B8%D0%BA%D0%B0%D0%B7%20%D0%BD%D0%B0%201%20%D0%B8%209%20%D0%BC%D0%B0%D1%8F.pdf?forcedownload=1")) {
                     startPrinting = true;
@@ -53,6 +62,52 @@ public class InitializationReplacement {
                     }
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String inputFile = "13.05.24.-15.05.24.xlsx";
+        minusUnion(inputFile);
+        minusUnion(inputFile);
+        minusUnion(inputFile);
+        minusUnion(inputFile);
+    }
+
+
+    public void minusUnion(String file) {
+        String filePath = "./mainexcel/squad2/" + file;
+
+        List<Integer> columnsToUnmerge = Arrays.asList(0, 6, 12); // Столбцы A, G, M
+
+        try (FileInputStream fis = new FileInputStream(filePath)) {
+            Workbook workbook = WorkbookFactory.create(fis);
+            Sheet sheet = workbook.getSheetAt(0);
+
+            for (int i = 0; i < sheet.getNumMergedRegions(); i++) {
+                CellRangeAddress mergedRegion = sheet.getMergedRegion(i);
+                if (mergedRegion != null) {
+                    int firstRow = mergedRegion.getFirstRow();
+                    int lastRow = mergedRegion.getLastRow();
+                    int firstColumn = mergedRegion.getFirstColumn();
+                    int lastColumn = mergedRegion.getLastColumn();
+
+                    if (columnsToUnmerge.contains(firstColumn) && firstColumn == lastColumn) {
+                        sheet.removeMergedRegion(i);
+                        for (int row = firstRow; row <= lastRow; row++) {
+                            Row r = sheet.getRow(row);
+                            Cell c = r.getCell(firstColumn);
+                            if (c == null) {
+                                r.createCell(firstColumn);
+                            }
+                        }
+                    }
+                }
+            }
+
+            try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                workbook.write(fos);
+            }
+            System.out.println("Объединённые ячейки разъединены успешно!");
+            System.out.println();
         } catch (IOException e) {
             e.printStackTrace();
         }
