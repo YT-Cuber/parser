@@ -20,7 +20,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
-import org.ytcuber.parser.Initialization;
 
 @Component
 public class InitializationReplacement {
@@ -31,7 +30,7 @@ public class InitializationReplacement {
         String link;
         try {
             // Указываем URL-адрес веб-страницы
-            Document doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=1223702").get();
+            Document doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=1584691").get();
 
             // Извлекаем все элементы с определенным селектором
             Elements elements = doc.select("a");

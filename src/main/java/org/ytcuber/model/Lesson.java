@@ -32,8 +32,7 @@ public class Lesson {
 //    public Lesson(String subject) {
 //        this.subject = subject;
 //    }
-
-    public String getSubject() {
-        return subject;
-    }
+//    public String getSubject() {
+//        return subject;
+//    }
 }

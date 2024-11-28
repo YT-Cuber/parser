@@ -17,8 +17,9 @@ public enum DayOfWeek {
     public static DayOfWeek valueOfLabel(String label) {
         for (DayOfWeek dayOfWeek : values()) {
             if (dayOfWeek.label.equals(label))
-                return  dayOfWeek;
+                return dayOfWeek;
         }
         return null;
     }
+
 }

@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.ytcuber.model.Lesson;
 import org.ytcuber.repository.LessonRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -28,12 +27,13 @@ public class ScheduleController {
     }
 
     @PostMapping("/start")
-    public String startPageP(@RequestParam("subgroup") int subgroup, Model model) {
+    public String startPageP(@RequestParam("subgroup") int subgroup, @RequestParam("group_text") String groupText, Model model) {
+        System.err.println(groupText.toLowerCase());
+        Long groupId = 1L;
         List<Lesson> lessonsForSelectedSubgroup = lessonRepository.getLessons(subgroup);
         model.addAttribute("lessons", lessonsForSelectedSubgroup);
         return "lessons";
     }
-
 
     @GetMapping("/index")
     public String hello() {
@@ -41,9 +41,8 @@ public class ScheduleController {
     }
 
     @GetMapping("/test")
-    public String test(Model model) {
-        Iterable<Lesson> lessons = lessonRepository.findAll();
-//        model.addAttribute("lessons", lessons);
+    public String test() {
+//        Iterable<Lesson> lessons = lessonRepository.findAll();
         return "test";
     }
 
