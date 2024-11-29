@@ -3,16 +3,10 @@ package org.ytcuber.parser;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.apache.logging.log4j.message.Message;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.ytcuber.model.Group;
@@ -24,12 +18,6 @@ import org.ytcuber.types.DayOfWeek;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,48 +27,17 @@ import java.util.Objects;
 @NoArgsConstructor
 @Component
 public class Initialization {
-
     @Autowired
     private GroupRepository groupRepository;
-
     @Autowired
     private LessonRepository lessonRepository;
-
     @PostConstruct
     public void init() throws IOException, InterruptedException {
-        int squadNumber;
-//        try {
-//            // Указываем URL-адрес веб-страницы
-//            Document doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=219213").get();
-//            String startLink = "https://newlms.magtu.ru/pluginfile.php/2510348/mod_folder/content/0/%D0%98%D0%A1%D0%BF%D0%92-21-1.pdf?forcedownload=1";
-//            String lastLink = "https://newlms.magtu.ru/login/index.php";
-//            squadNumber = 2;
-//            squads(doc, startLink, lastLink, squadNumber);
-//
-//            doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=219213").get();
-//            startLink = "https://newlms.magtu.ru/pluginfile.php/622200/mod_folder/content/0/%D0%90%D0%A2%D0%BF-23-1.pdf?forcedownload=1";
-//            lastLink = "◄ 5 КУРС";
-//            squadNumber = 1;
-//            squads(doc, startLink, lastLink, squadNumber);
-//
-////            doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=1584691").get();
-////            startLink = "https://newlms.magtu.ru/pluginfile.php/2510348/mod_folder/content/0/%D0%98%D0%A1%D0%BF%D0%92-21-1.pdf?forcedownload=1";
-////            lastLink = "◄ ОТДЕЛЕНИЕ № 2 «ИНФОРМАЦИОННЫЕ ТЕХНОЛОГИИ И ТРАНСПОРТ»";
-////            squadNumber = 3;
-////            squads(doc, startLink, lastLink, squadNumber);
-//
-////            doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=219205").get();
-////            startLink = "https://newlms.magtu.ru/pluginfile.php/622192/mod_folder/content/0/%D0%90%D0%A2%D0%BF-20-1.pdf?forcedownload=1";
-////            lastLink = "◄ ОТДЕЛЕНИЕ № 3 «СТРОИТЕЛЬСТВО, ЭКОНОМИКА И СФЕРА ОБСЛУЖИВАНИЯ>";
-////            squadNumber = 4;
-////            squads(doc, startLink, lastLink, squadNumber);
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-        String groupName = "ИСпПК-21-1";
+//        String downloadUrl = "https://newlms.magtu.ru/mod/folder/download_folder.php?id=1584691";
+
+        // Обработка файлов из распакованной директории
+        String groupName = "КсК-21-1";
         String squadNum = "2";
-//        Group groupId = groupRepository.findByName(groupName);
         String inputFilePath = "./mainexcel/squad" + squadNum + "/" + groupName + ".xlsx";
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
@@ -89,54 +46,8 @@ public class Initialization {
         Thread.sleep(1000);
 
         List<Lesson> lessonsList = parseExcel(myExcelSheet, null);
-
         lessonRepository.saveAllAndFlush(lessonsList);
-
         Thread.sleep(500);
-    }
-
-    public void squads(Document doc, String startLink, String lastLink, Integer squadNumber) {
-        // Извлекаем все элементы с определенным селектором
-        String filePath = "./mainexcel/squad" + squadNumber + "/";
-        Elements elements = doc.select("a");
-
-        // Цикл по всем элементам
-        boolean startPrinting = false;
-        // Перебираем все извлеченные элементы и выводим их на экран
-        for (Element element : elements) {
-            String title = element.text(); // Название файла
-            String link = element.absUrl("href"); // Ссылка на скачивание файла
-
-            if (link.equals(startLink)) {
-                startPrinting = true;
-            }
-
-            if (title.equals(lastLink)) {
-                break;
-            }
-
-            if (startPrinting && !title.endsWith(".pdf")) {
-                System.out.println(new String(title.getBytes(StandardCharsets.UTF_8)));
-                System.out.println();
-
-                // Скачиваем файл
-                try (InputStream in = new URL(link).openStream()) {
-                    Files.copy(in, Path.of(filePath + title), StandardCopyOption.REPLACE_EXISTING);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                Group groups = new Group();
-                if (title.endsWith(".xlsx")) {
-                    title = title.substring(0, title.length() - 5);
-                }
-                groups.setTitle(title);
-                groups.setSquad(squadNumber);
-
-                groupRepository.save(groups);
-
-            }
-        }
     }
 
     public void minusUnion(String file) {
@@ -298,7 +209,10 @@ public class Initialization {
 
                     // Проверка, что ячейка существует и корректно обработана
                     if (y != 2) {
-                        boolean isNewWeek = parseOddWeek(myExcelSheet.getRow(rowId).getCell(cellId));
+                        boolean isNewWeek;
+                        try {
+                            isNewWeek = parseOddWeek(myExcelSheet.getRow(rowId).getCell(cellId));
+                        } catch (NullPointerException e) { isNewWeek = true; }
                         int tmpLogging = 0;
                         while (isNewWeek) {
                             rowId++;
