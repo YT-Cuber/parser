@@ -33,20 +33,22 @@ public class Initialization {
         this.lessonRepository = lessonRepository;
         this.groupRepository = groupRepository;
     }
+
     @PostConstruct
-    public void init() throws IOException, InterruptedException {
+    private void init() throws IOException, InterruptedException {
+        System.out.println("Можно написать инициализацию, но я не буду");
+    }
+
+    public void processExcelParse(String groupName) throws IOException, InterruptedException {
 //        String downloadUrl = "https://newlms.magtu.ru/mod/folder/download_folder.php?id=1584691";
 
-        for (int i = 1; i <= 4; i++) {
-            groupProcessor.processGroups(String.valueOf(i));
-        }
-
-        String groupName = "ИСпПК-21-1";
+//        groupName = "ИСпПК-21-1";
         Integer squadNum = groupRepository.findSquadByGroupName(groupName);
         Optional<Group> groupId = groupRepository.findByGroupName(groupName);
 
         String inputFilePath = "./mainexcel/squad" + squadNum + "/" + groupName + ".xlsx";
-        XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath)); XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
+        XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
+        XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
         minusUnion(inputFilePath); minusUnion(inputFilePath);
 
         List<Lesson> lessonsList = parseExcel(myExcelSheet, groupId);
@@ -99,10 +101,20 @@ public class Initialization {
         int u = 1;
         int tmpDay = 1;
         int tmpLog = 0;
+        int tmpSat = 0;
         int isWeekOdd;
         DayOfWeek datOfWeek;
-
         // Проверка на начало Рассписания Группы
+        String startSchedule = "";
+        try {odd = weekOdd(odd, rowId, myExcelSheet);} catch (Exception ignored) {}
+        while (odd == 0) {
+            try {odd = weekOdd(odd, rowId, myExcelSheet);} catch (Exception ignored) {}
+            rowId++;
+            if (odd != 0){
+                rowId--;
+            }
+        }
+        odd = 0;
 
         Lesson lesson = new Lesson();
         int weekOdd;
@@ -119,57 +131,26 @@ public class Initialization {
                     while (tmpDay <= 2) {
                         rowId++;
                         // Проверка и внесение из enum дня
+
                         datOfWeek = weekDay(rowId, cellId, myExcelSheet);
                         boolean isEndDayOfWeek = endDayOfWeek(datOfWeek, u);
+                        boolean isSaturday = isEndDayOfWeek(datOfWeek);
+                        tmpSat  = logicalSaturday(isSaturday, tmpSat, rowId, cellId, myExcelSheet);
+                        if (tmpSat == 1) {
+                            System.out.println("В субботу нет пар"); tmpSat = 0;
+                        } else {
+                            rowId++;
+                            boolean tmpLes = false;
+                            while (!tmpLes) {
+                                lesson.setOrdinal((int) myExcelSheet.getRow(rowId).getCell(cellId).getNumericCellValue()); // Внесение Номер пары
+                                int para = (int) myExcelSheet.getRow(rowId).getCell(cellId).getNumericCellValue(); // Запоминание пары
 
-                        rowId++;
-                        boolean tmpLes = false;
-                        while (!tmpLes) {
-                            lesson.setOrdinal((int) myExcelSheet.getRow(rowId).getCell(cellId).getNumericCellValue()); // Внесение Номер пары
-                            int para = (int) myExcelSheet.getRow(rowId).getCell(cellId).getNumericCellValue(); // Запоминание пары
+                                lesson.setOdd(weekOdd);
+                                lesson.setDayOfWeek(datOfWeek);
 
-                            lesson.setOdd(weekOdd);
-                            lesson.setDayOfWeek(datOfWeek);
-
-                            logicalAll(lesson, rowId, cellId, para, weekOdd, datOfWeek, myExcelSheet, groupId);
-                            lesson = new Lesson();
-                            rowId += 2;
-
-                            Row rowT = myExcelSheet.getRow(rowId);
-                            Cell cell = null;
-                            if (rowT != null) {
-                                cell = rowT.getCell(cellId);
-                            }
-
-                            dayOfWeek = parseDayOfWeek(cell);
-
-                            // Проверка, является ли ячейка null или содержит пустую строку
-                            if (cell == null ||
-                                    (cell.getCellType() == CellType.STRING && cell.getStringCellValue().trim().isEmpty()) ||
-                                    (cell.getCellType() == CellType.STRING && !parseOddWeek(cell)) ||
-                                    (cell.getCellType() == CellType.BLANK)) {
-                                tmpLes = true;
-                            } else if (dayOfWeek != null) {
-                                tmpLes = true;
-                            }
-                        }
-                        if (!isEndDayOfWeek) {
-                            while (tmpLes) { // Проверка, что там написан день недели или Тип недели
-                                Row row = myExcelSheet.getRow(rowId);
-
-                                if (row == null) {
-                                    if (tmpLog == 10) {
-                                        break;
-                                    }
-                                    rowId++;
-                                    isWeekOdd = weekOdd(odd, rowId, myExcelSheet); // Проверка на неделю !!!
-                                    if (isWeekOdd == 1 && i == 2 || isWeekOdd == 2 && i == 2 || isWeekOdd == 1 && i == 3 || isWeekOdd == 2 && i == 3) {
-                                        rowId++;
-                                        break;
-                                    }
-                                    tmpLog++;
-                                    continue;
-                                }
+                                logicalAll(lesson, rowId, cellId, para, weekOdd, datOfWeek, myExcelSheet, groupId);
+                                lesson = new Lesson();
+                                rowId += 2;
 
                                 Row rowT = myExcelSheet.getRow(rowId);
                                 Cell cell = null;
@@ -179,25 +160,62 @@ public class Initialization {
 
                                 dayOfWeek = parseDayOfWeek(cell);
 
-                                boolean isOddWeek = parseOddWeek(cell);
-
-                                if (!isOddWeek) {
-                                    tmpLes = false;
-                                    rowId++;
+                                // Проверка, является ли ячейка null или содержит пустую строку
+                                if (cell == null ||
+                                        (cell.getCellType() == CellType.STRING && cell.getStringCellValue().trim().isEmpty()) ||
+                                        (cell.getCellType() == CellType.STRING && !parseOddWeek(cell)) ||
+                                        (cell.getCellType() == CellType.BLANK)) {
+                                    tmpLes = true;
                                 } else if (dayOfWeek != null) {
-                                    tmpLes = false;
-                                } else {
-                                    rowId += 2;
+                                    tmpLes = true;
+                                }
+                            }
+                            if (!isEndDayOfWeek) {
+                                while (tmpLes) { // Проверка, что там написан день недели или Тип недели
+                                    Row row = myExcelSheet.getRow(rowId);
+
+                                    if (row == null) {
+                                        if (tmpLog == 10) {
+                                            break;
+                                        }
+                                        rowId++;
+                                        isWeekOdd = weekOdd(odd, rowId, myExcelSheet); // Проверка на неделю !!!
+                                        if (isWeekOdd == 1 && i == 2 || isWeekOdd == 2 && i == 2 || isWeekOdd == 1 && i == 3 || isWeekOdd == 2 && i == 3) {
+                                            rowId++;
+                                            break;
+                                        }
+                                        tmpLog++;
+                                        continue;
+                                    }
+
+                                    Row rowT = myExcelSheet.getRow(rowId);
+                                    Cell cell = null;
+                                    if (rowT != null) {
+                                        cell = rowT.getCell(cellId);
+                                    }
+
+                                    dayOfWeek = parseDayOfWeek(cell);
+
+                                    boolean isOddWeek = parseOddWeek(cell);
+
+                                    if (!isOddWeek) {
+                                        tmpLes = false;
+                                        rowId++;
+                                    } else if (dayOfWeek != null) {
+                                        tmpLes = false;
+                                    } else {
+                                        rowId += 2;
+                                    }
                                 }
                             }
                         }
-                        tmpDay++;
-                        u++;
-                        rowId--;
-                    }
-                    tmpDay = 1;
+                            tmpDay++;
+                            u++;
+                            rowId--;
+                        }
 
-                }
+                        tmpDay = 1;
+                    }
                 if (i != 3) {
                     cellId += 6;
                     if (y == 1) {
@@ -237,7 +255,32 @@ public class Initialization {
         }
         return lessonsList;
     }
-// Логика написания id группы
+
+    private int logicalSaturday(boolean isSaturday, int tmpSat, int rowId, int cellId, XSSFSheet myExcelSheet) {
+        if (isSaturday) {
+            try {
+                Row rowT = myExcelSheet.getRow(rowId + 1);
+                Cell cell = null;
+                if (rowT != null) {
+                    cell = rowT.getCell(cellId);
+                }
+                // Проверка, является ли ячейка null или содержит пустую строку
+                if (cell == null ||
+                        (cell.getCellType() == CellType.STRING && cell.getStringCellValue().trim().isEmpty()) ||
+                        (cell.getCellType() == CellType.STRING && !parseOddWeek(cell)) ||
+                        (cell.getCellType() == CellType.BLANK)) {
+                    tmpSat = 1;
+                }
+            } catch (Exception ignored) { }
+        } else {
+            tmpSat = 0;
+        }
+        return tmpSat;
+    }
+
+
+
+    // Логика написания id группы
     public DayOfWeek parseDayOfWeek(Cell cell) {
         if (cell == null || cell.getCellType() != CellType.STRING) return null;
 
@@ -263,6 +306,14 @@ public class Initialization {
         }
     }
 
+    public boolean isEndDayOfWeek(DayOfWeek datOfWeek) {
+        if (datOfWeek == null) return false;
+        return switch (datOfWeek) {
+            case SATURDAY -> true;
+            default -> false;
+        };
+    }
+
     public boolean parseOddWeek(Cell cell) {
         if (cell == null || cell.getCellType() == CellType.BLANK || (cell.getCellType() == CellType.STRING && cell.getStringCellValue().trim().isEmpty()) || cell.getCellType() == CellType.NUMERIC) return true;
         return switch (cell.getStringCellValue()) {
@@ -276,7 +327,6 @@ public class Initialization {
         cell++;
 //        lesson.setGroup(groupRepository.findById(groupid).get());
         if (!Objects.equals(myExcelSheet.getRow(row).getCell(cell).getStringCellValue(), "")) {
-
             String cellValue = myExcelSheet.getRow(row).getCell(cell).getStringCellValue();
             String cellValue2 = myExcelSheet.getRow(row).getCell(cell + 2).getStringCellValue();
             String cellValue3 = myExcelSheet.getRow(row + 1).getCell(cell + 3).getStringCellValue();

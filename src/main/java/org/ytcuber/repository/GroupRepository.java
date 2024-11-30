@@ -16,4 +16,10 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
     @Query("SELECT g FROM groups g WHERE LOWER(g.title) LIKE LOWER(:groupName)")
     Optional<Group> findByGroupName(@Param("groupName") String groupName);
+
+    @Query("SELECT g.title FROM groups g WHERE g.id = :groupId")
+    String findNameById(@Param("groupId") Integer groupId);
+
+    @Query("SELECT g.id FROM groups g ORDER BY g.id DESC LIMIT 1")
+    Integer findLastId();
 }

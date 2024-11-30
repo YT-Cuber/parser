@@ -11,7 +11,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.ytcuber.model.Group;
-import org.ytcuber.model.Lesson;
 import org.ytcuber.model.Replacement;
 import org.ytcuber.repository.GroupRepository;
 import org.ytcuber.repository.LessonRepository;
@@ -31,10 +30,18 @@ public class InitializationReplacement {
     private GroupRepository groupRepository;
     @Autowired
     private ReplacementRepository replacementRepository;
+    private Initialization initialization;
+    private GroupProcessor groupProcessor;
+
+    @Autowired
+    public void ApplicationInitializer(GroupProcessor groupProcessor, GroupRepository groupRepository) {
+        this.groupProcessor = groupProcessor;
+        this.groupRepository = groupRepository;
+    }
 
     @PostConstruct
     public void init() throws IOException, InterruptedException {
-        // Обработка файлов из распакованной директории
+
         String replacementDate = "28.11.24-30.11.24";
         String inputFilePath = "./mainexcel/replacement/" + replacementDate + ".xlsx";
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
@@ -42,11 +49,9 @@ public class InitializationReplacement {
         minusUnion(inputFilePath);
         minusUnion(inputFilePath);
         minusUnion(inputFilePath);
-        Thread.sleep(1000);
 
         List<Replacement> lessonsList = parseExcel(myExcelSheet, null);
         replacementRepository.saveAllAndFlush(lessonsList);
-        Thread.sleep(500);
     }
 
     public void minusUnion(String file) {
