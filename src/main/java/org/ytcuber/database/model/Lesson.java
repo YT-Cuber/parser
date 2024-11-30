@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.ytcuber.database.types.DayOfWeek;
 
+import java.sql.Date;
+
 @Data
 @Entity
 @NoArgsConstructor
@@ -23,6 +25,7 @@ public class Lesson {
     private Integer subgroup; // Подгруппа
     private String teacher; // Преподаватель
     private String location; // Кабинет
+    private Date lastDateUpdate; // Дата последнего обновления
     @ManyToOne
     private Group group; // Название группы(ID)
 }
