@@ -1,115 +1,84 @@
 package org.ytcuber.parser;
 
 import jakarta.annotation.PostConstruct;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.ytcuber.model.Group;
+import org.ytcuber.model.Lesson;
+import org.ytcuber.model.Replacement;
+import org.ytcuber.repository.GroupRepository;
+import org.ytcuber.repository.LessonRepository;
+import org.ytcuber.repository.ReplacementRepository;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
+@AllArgsConstructor
+@NoArgsConstructor
 @Component
 public class InitializationReplacement {
+    @Autowired
+    private GroupRepository groupRepository;
+    @Autowired
+    private ReplacementRepository replacementRepository;
 
     @PostConstruct
-    public void init(){
-        String title;
-        String link;
-        try {
-            // Указываем URL-адрес веб-страницы
-            Document doc = Jsoup.connect("https://newlms.magtu.ru/mod/folder/view.php?id=1584691").get();
+    public void init() throws IOException, InterruptedException {
+        // Обработка файлов из распакованной директории
+        String replacementDate = "28.11.24-30.11.24";
+        String inputFilePath = "./mainexcel/replacement/" + replacementDate + ".xlsx";
+        XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
+        XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
+        minusUnion(inputFilePath);
+        minusUnion(inputFilePath);
+        minusUnion(inputFilePath);
+        Thread.sleep(1000);
 
-            // Извлекаем все элементы с определенным селектором
-            Elements elements = doc.select("a");
-
-            boolean startPrinting = false;
-            // Перебираем все извлеченные элементы и выводим их на экран
-            for (Element element : elements) {
-                title = element.text(); // Название файла
-                link = element.absUrl("href"); // Ссылка на скачивание файла
-
-                if (link.equals("https://newlms.magtu.ru/pluginfile.php/1936755/mod_folder/content/0/10-30-259_%20%D0%BF%D1%80%D0%B8%D0%BA%D0%B0%D0%B7%20%D0%BD%D0%B0%201%20%D0%B8%209%20%D0%BC%D0%B0%D1%8F.pdf?forcedownload=1")) {
-                    startPrinting = true;
-                }
-
-                if (title.equals("◄ ОТДЕЛЕНИЕ № 4 «Образовательно-производственный центр»")) {
-                    break;
-                }
-
-                if (startPrinting && !title.endsWith(".pdf")) {
-                    System.out.println(new String(title.getBytes(StandardCharsets.UTF_8)));
-                    // System.out.println("Ссылка: " + link);
-
-                    // Скачиваем файл
-                    try (InputStream in = new URL(link).openStream()) {
-                        Files.copy(in, Path.of("C:/My_Space/More/Java/parser/mainexcel/replacement/" + title), StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String inputFile = "13.05.24.-15.05.24.xlsx";
-        minusUnion(inputFile);
-        minusUnion(inputFile);
-        minusUnion(inputFile);
-        minusUnion(inputFile);
+        List<Replacement> lessonsList = parseExcel(myExcelSheet, null);
+        replacementRepository.saveAllAndFlush(lessonsList);
+        Thread.sleep(500);
     }
 
-
     public void minusUnion(String file) {
-        String filePath = "./mainexcel/squad2/" + file;
-
-        List<Integer> columnsToUnmerge = Arrays.asList(0, 6, 12); // Столбцы A, G, M
-
-        try (FileInputStream fis = new FileInputStream(filePath)) {
+        try (FileInputStream fis = new FileInputStream(file)) {
             Workbook workbook = WorkbookFactory.create(fis);
             Sheet sheet = workbook.getSheetAt(0);
 
-            for (int i = 0; i < sheet.getNumMergedRegions(); i++) {
-                CellRangeAddress mergedRegion = sheet.getMergedRegion(i);
-                if (mergedRegion != null) {
-                    int firstRow = mergedRegion.getFirstRow();
-                    int lastRow = mergedRegion.getLastRow();
-                    int firstColumn = mergedRegion.getFirstColumn();
-                    int lastColumn = mergedRegion.getLastColumn();
+            // Сохраняем количество объединений, так как список изменяется во время итерации
+            int mergedRegionsCount = sheet.getNumMergedRegions();
 
-                    if (columnsToUnmerge.contains(firstColumn) && firstColumn == lastColumn) {
-                        sheet.removeMergedRegion(i);
-                        for (int row = firstRow; row <= lastRow; row++) {
-                            Row r = sheet.getRow(row);
-                            Cell c = r.getCell(firstColumn);
-                            if (c == null) {
-                                r.createCell(firstColumn);
-                            }
-                        }
-                    }
-                }
+            // Удаляем все объединённые ячейки
+            for (int i = mergedRegionsCount - 1; i >= 0; i--) {
+                sheet.removeMergedRegion(i);
             }
 
-            try (FileOutputStream fos = new FileOutputStream(filePath)) {
+            try (FileOutputStream fos = new FileOutputStream(file)) {
                 workbook.write(fos);
             }
-            System.out.println("Объединённые ячейки разъединены успешно!");
-            System.out.println();
+
+            System.out.println("Все объединённые ячейки успешно разъединены!");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    public List<Replacement> parseExcel(XSSFSheet myExcelSheet, Group groupId) {
+        final List<Replacement> replacementList = new ArrayList<>();
+        int rowId = 1;
+        int cellId = 0;
+
+        return replacementList;
+    }
+
 
 }

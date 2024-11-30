@@ -11,12 +11,9 @@ import org.ytcuber.repository.GroupRepository;
 @Transactional
 @RequestMapping("/group")
 public class GroupController {
-
     private GroupRepository groupRepository;
-
     @GetMapping
     public String createGroup(@RequestParam String group) {
-
         return "index";
     }
 }

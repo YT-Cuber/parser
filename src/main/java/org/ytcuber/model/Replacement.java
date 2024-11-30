@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.ytcuber.types.DayOfWeek;
+import java.sql.Date;
 
 @Data
 @Entity
@@ -24,6 +25,7 @@ public class Replacement {
     private Integer subgroup; // Подгруппа
     private String teacher; // Преподаватель
     private String location; // Кабинет
+    private Date date; // Дата
 
     @ManyToOne
     private Group group; // Название группы(ID)

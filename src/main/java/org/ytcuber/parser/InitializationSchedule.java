@@ -17,10 +17,8 @@ import java.time.format.DateTimeParseException;
 @NoArgsConstructor
 @Component
 public class InitializationSchedule {
-
     @Autowired
     private ScheduleRepository scheduleRepository;
-
     @PostConstruct
     public void init() {
         String[][] weekdaySchedule = {
