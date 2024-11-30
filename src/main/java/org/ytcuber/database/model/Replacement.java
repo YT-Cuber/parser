@@ -1,11 +1,11 @@
-package org.ytcuber.model;
+package org.ytcuber.database.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.ytcuber.types.DayOfWeek;
+import org.ytcuber.database.types.DayOfWeek;
 import java.sql.Date;
 
 @Data
@@ -14,10 +14,9 @@ import java.sql.Date;
 @AllArgsConstructor
 @Builder
 public class Replacement {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // ID
+    private Long id;
     private Integer odd; // Чётная/Нечётная неделя
     private Integer ordinal; // Номер пары
     private DayOfWeek datOfWeek; // День недели
@@ -26,8 +25,6 @@ public class Replacement {
     private String teacher; // Преподаватель
     private String location; // Кабинет
     private Date date; // Дата
-
     @ManyToOne
     private Group group; // Название группы(ID)
 }
-

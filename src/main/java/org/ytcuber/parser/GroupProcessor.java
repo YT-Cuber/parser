@@ -2,8 +2,8 @@ package org.ytcuber.parser;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.ytcuber.model.Group;
-import org.ytcuber.repository.GroupRepository;
+import org.ytcuber.database.model.Group;
+import org.ytcuber.database.repository.GroupRepository;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -15,7 +15,6 @@ import java.util.List;
 
 @Component
 public class GroupProcessor {
-
     private final GroupRepository groupRepository;
 
     @Autowired
@@ -23,7 +22,7 @@ public class GroupProcessor {
         this.groupRepository = groupRepository;
     }
 
-    public void processGroups(String squadNum) throws IOException, InterruptedException {
+    public void processGroups(String squadNum) throws IOException {
         String folderPath = "./mainexcel/squad" + squadNum + "/";
         Path folder = Paths.get(folderPath);
 
@@ -39,14 +38,13 @@ public class GroupProcessor {
             String fileName = filePath.getFileName().toString();
             if (fileName.endsWith(".xlsx")) {
                 String groupName = fileName.substring(0, fileName.length() - 5); // Убираем .xlsx
-//                groupName = groupName.replace('-', '.');  // Удаляем все дефисы// Заменяем дефисы на подчеркивания
+//                groupName = groupName.replace('-', '.'); // Заменяем дефисы на подчеркивания
                 Group group = new Group();
                 group.setTitle(groupName);
                 group.setSquad(Integer.valueOf(squadNum));
                 groupsToSave.add(group);
             }
         }
-
 
         // Удаление всех PDF-файлов из папки
         try (DirectoryStream<Path> pdfStream = Files.newDirectoryStream(folder, "*.pdf")) {

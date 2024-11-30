@@ -1,4 +1,4 @@
-package org.ytcuber.parser;
+package org.ytcuber.initialization;
 
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
@@ -9,12 +9,11 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.ytcuber.model.Group;
-import org.ytcuber.model.Lesson;
-import org.ytcuber.repository.GroupRepository;
-import org.ytcuber.repository.LessonRepository;
-import org.ytcuber.types.DayOfWeek;
-
+import org.ytcuber.database.model.Group;
+import org.ytcuber.database.model.Lesson;
+import org.ytcuber.database.repository.GroupRepository;
+import org.ytcuber.database.repository.LessonRepository;
+import org.ytcuber.database.types.DayOfWeek;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -25,24 +24,20 @@ import java.util.*;
 @Component
 public class Initialization {
     private LessonRepository lessonRepository;
-    private GroupProcessor groupProcessor;
     private GroupRepository groupRepository;
     @Autowired
-    public void ApplicationInitializer(GroupProcessor groupProcessor, LessonRepository lessonRepository, GroupRepository groupRepository) {
-        this.groupProcessor = groupProcessor;
+    public void ApplicationInitializer(LessonRepository lessonRepository, GroupRepository groupRepository) {
         this.lessonRepository = lessonRepository;
         this.groupRepository = groupRepository;
     }
 
     @PostConstruct
-    private void init() throws IOException, InterruptedException {
+    private void init() {
         System.out.println("Можно написать инициализацию, но я не буду");
     }
 
-    public void processExcelParse(String groupName) throws IOException, InterruptedException {
+    public void processExcelParse(String groupName) throws IOException {
 //        String downloadUrl = "https://newlms.magtu.ru/mod/folder/download_folder.php?id=1584691";
-
-//        groupName = "ИСпПК-21-1";
         Integer squadNum = groupRepository.findSquadByGroupName(groupName);
         Optional<Group> groupId = groupRepository.findByGroupName(groupName);
 
@@ -104,8 +99,8 @@ public class Initialization {
         int tmpSat = 0;
         int isWeekOdd;
         DayOfWeek datOfWeek;
+
         // Проверка на начало Рассписания Группы
-        String startSchedule = "";
         try {odd = weekOdd(odd, rowId, myExcelSheet);} catch (Exception ignored) {}
         while (odd == 0) {
             try {odd = weekOdd(odd, rowId, myExcelSheet);} catch (Exception ignored) {}
@@ -130,8 +125,8 @@ public class Initialization {
                     }
                     while (tmpDay <= 2) {
                         rowId++;
-                        // Проверка и внесение из enum дня
 
+                        // Проверка и внесение из enum дня
                         datOfWeek = weekDay(rowId, cellId, myExcelSheet);
                         boolean isEndDayOfWeek = endDayOfWeek(datOfWeek, u);
                         boolean isSaturday = isEndDayOfWeek(datOfWeek);
@@ -278,9 +273,6 @@ public class Initialization {
         return tmpSat;
     }
 
-
-
-    // Логика написания id группы
     public DayOfWeek parseDayOfWeek(Cell cell) {
         if (cell == null || cell.getCellType() != CellType.STRING) return null;
 
@@ -308,10 +300,7 @@ public class Initialization {
 
     public boolean isEndDayOfWeek(DayOfWeek datOfWeek) {
         if (datOfWeek == null) return false;
-        return switch (datOfWeek) {
-            case SATURDAY -> true;
-            default -> false;
-        };
+        return datOfWeek == DayOfWeek.SATURDAY;
     }
 
     public boolean parseOddWeek(Cell cell) {
@@ -425,7 +414,6 @@ public class Initialization {
 
     public DayOfWeek weekDay(int row, int cell, XSSFSheet myExcelSheet) {
         String weekDayRawValue = myExcelSheet.getRow(row).getCell(cell).getStringCellValue();
-
         return DayOfWeek.valueOfLabel(weekDayRawValue);
     }
 

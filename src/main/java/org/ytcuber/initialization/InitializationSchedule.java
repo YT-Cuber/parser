@@ -1,14 +1,13 @@
-package org.ytcuber.parser;
+package org.ytcuber.initialization;
 
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.ytcuber.model.Schedule;
-import org.ytcuber.repository.ScheduleRepository;
-
-import org.ytcuber.types.DayOfWeek;
+import org.ytcuber.database.model.Schedule;
+import org.ytcuber.database.repository.ScheduleRepository;
+import org.ytcuber.database.types.DayOfWeek;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
@@ -41,20 +40,19 @@ public class InitializationSchedule {
 
         DayOfWeek[] daysOfWeek = DayOfWeek.values();
 
-        for (int i = 0; i < daysOfWeek.length; i++) {
-            String[][] daySchedule = daysOfWeek[i] == DayOfWeek.SATURDAY ? saturdaySchedule : weekdaySchedule;
+        for (DayOfWeek dayOfWeek : daysOfWeek) {
+            String[][] daySchedule = dayOfWeek == DayOfWeek.SATURDAY ? saturdaySchedule : weekdaySchedule;
             for (int j = 0; j < daySchedule.length; j++) {
                 try {
                     Schedule schedule = new Schedule();
                     schedule.setOrdinal(j + 1);
                     schedule.setStarttime(LocalTime.parse(daySchedule[j][0]));
                     schedule.setEndtime(LocalTime.parse(daySchedule[j][1]));
-                    schedule.setDayOfWeek(daysOfWeek[i]);
+                    schedule.setDayOfWeek(dayOfWeek);
 
                     scheduleRepository.save(schedule);
                 } catch (DateTimeParseException e) {
                     System.err.println("Ошибка парсинга времени: " + e.getMessage());
-                    // Продолжаем выполнение или прерываем цикл в зависимости от вашего желания
                 }
             }
         }

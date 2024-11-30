@@ -3,8 +3,8 @@ package org.ytcuber.parser;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.ytcuber.repository.GroupRepository;
-
+import org.ytcuber.initialization.Initialization;
+import org.ytcuber.database.repository.GroupRepository;
 import java.io.IOException;
 
 @Component
@@ -21,23 +21,13 @@ public class AllSchedule {
 
     @PostConstruct
     public void init() throws IOException, InterruptedException {
-        for (int i = 1; i <= 4; i++) {
-            groupProcessor.processGroups(String.valueOf(i));
-        }
-
+        for (int i = 1; i <= 4; i++) { groupProcessor.processGroups(String.valueOf(i)); }
         Integer lastId = groupRepository.findLastId();
         for (int i = 1; i <= lastId; i++) {
-//            if (i != 25) { // Нет субботы
-//                if(i != 54) { // Нет субботы
-//                    if(i != 67) { // Нет субботы
-                        String groupName = String.valueOf(groupRepository.findNameById(i));
-                        initialization.processExcelParse(groupName);
-//                    }
-//                }
-//            }
+            String groupName = String.valueOf(groupRepository.findNameById(i));
+            initialization.processExcelParse(groupName);
         }
-//
-//        String groupName = String.valueOf(groupRepository.findNameById(25));
-//        initialization.processExcelParse(groupName);
+//        Нет субботы у 25, 54, 67, Странная фигня у КС-23-1
+//        String groupName = String.valueOf(groupRepository.findNameById(38)); initialization.processExcelParse(groupName);
     }
 }

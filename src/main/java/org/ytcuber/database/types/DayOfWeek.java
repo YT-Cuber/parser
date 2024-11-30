@@ -1,4 +1,4 @@
-package org.ytcuber.types;
+package org.ytcuber.database.types;
 
 public enum DayOfWeek {
     MONDAY ("Понедельник"),
@@ -10,7 +10,7 @@ public enum DayOfWeek {
 
     private final String label;
 
-    private DayOfWeek(String label) {
+    DayOfWeek(String label) {
         this.label = label;
     }
 

@@ -1,4 +1,4 @@
-package org.ytcuber.model;
+package org.ytcuber.database.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,22 +8,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.ytcuber.types.DayOfWeek;
-import java.time.LocalTime;
 
 @Data
-@Entity
+@Entity(name = "groups")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Schedule {
-
+public class Group {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Integer ordinal; // Номер пары
-    private LocalTime starttime;
-    private LocalTime endtime;
-    private DayOfWeek dayOfWeek;
-
+    private String title; // Название
+    private Integer squad; // Номер отделения
 }

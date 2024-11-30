@@ -1,12 +1,11 @@
-package org.ytcuber.model;
+package org.ytcuber.database.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.ytcuber.types.DayOfWeek;
-
+import org.ytcuber.database.types.DayOfWeek;
 
 @Data
 @Entity
@@ -14,10 +13,9 @@ import org.ytcuber.types.DayOfWeek;
 @AllArgsConstructor
 @Builder
 public class Lesson {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // ID
+    private Long id;
     private Integer odd; // Чётная/Нечётная неделя
     private DayOfWeek dayOfWeek; // День недели
     private Integer ordinal; // Номер пары
@@ -25,14 +23,6 @@ public class Lesson {
     private Integer subgroup; // Подгруппа
     private String teacher; // Преподаватель
     private String location; // Кабинет
-
     @ManyToOne
     private Group group; // Название группы(ID)
-
-//    public Lesson(String subject) {
-//        this.subject = subject;
-//    }
-//    public String getSubject() {
-//        return subject;
-//    }
 }

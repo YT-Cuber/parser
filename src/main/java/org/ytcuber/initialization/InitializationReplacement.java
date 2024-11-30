@@ -1,4 +1,4 @@
-package org.ytcuber.parser;
+package org.ytcuber.initialization;
 
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
@@ -10,12 +10,11 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.ytcuber.model.Group;
-import org.ytcuber.model.Replacement;
-import org.ytcuber.repository.GroupRepository;
-import org.ytcuber.repository.LessonRepository;
-import org.ytcuber.repository.ReplacementRepository;
-
+import org.ytcuber.database.model.Group;
+import org.ytcuber.database.model.Replacement;
+import org.ytcuber.parser.GroupProcessor;
+import org.ytcuber.database.repository.GroupRepository;
+import org.ytcuber.database.repository.ReplacementRepository;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -40,13 +39,12 @@ public class InitializationReplacement {
     }
 
     @PostConstruct
-    public void init() throws IOException, InterruptedException {
+    public void init() throws IOException {
 
         String replacementDate = "28.11.24-30.11.24";
         String inputFilePath = "./mainexcel/replacement/" + replacementDate + ".xlsx";
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
-        minusUnion(inputFilePath);
         minusUnion(inputFilePath);
         minusUnion(inputFilePath);
 
@@ -84,6 +82,5 @@ public class InitializationReplacement {
 
         return replacementList;
     }
-
 
 }
