@@ -14,10 +14,15 @@ java {
 
 repositories {
 	mavenCentral()
+	maven {
+		url "https://repo1.maven.org/maven2/"
+	}
+	maven {
+		url "https://repository.jboss.org/nexus/content/repositories/releases/"
+	}
 }
 
 dependencies {
-
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.apache.poi:poi:5.2.5'
 	implementation 'org.apache.poi:poi-ooxml:5.2.5'
@@ -27,7 +32,9 @@ dependencies {
 	implementation "org.jboss.logging:jboss-logging:3.5.3.Final"
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.postgresql:postgresql'
-
+//	implementation 'org.telegram:telegrambots:6.7.0'
+//	implementation 'org.telegram:telegrambots-spring-boot-starter:6.7.0'
+	
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.postgresql:postgresql'
 }

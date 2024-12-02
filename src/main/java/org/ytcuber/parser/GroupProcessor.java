@@ -58,6 +58,6 @@ public class GroupProcessor {
 
         // Сохраняем группы в базу
         groupRepository.saveAll(groupsToSave);
-        System.out.println("Groups saved successfully.");
+        System.out.println("Группы успешно сохранены.");
     }
 }

@@ -14,9 +14,11 @@ import org.ytcuber.database.model.Lesson;
 import org.ytcuber.database.repository.GroupRepository;
 import org.ytcuber.database.repository.LessonRepository;
 import org.ytcuber.database.types.DayOfWeek;
+
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @AllArgsConstructor
@@ -208,7 +210,6 @@ public class Initialization {
                             u++;
                             rowId--;
                         }
-
                         tmpDay = 1;
                     }
                 if (i != 3) {
@@ -313,6 +314,7 @@ public class Initialization {
 
     public void logicalAll(Lesson lesson, int row, int cell, int para1, int weekOdd, DayOfWeek datOfWeek, XSSFSheet myExcelSheet, Optional<Group> groupId) {
         int tmpSub;
+        SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yyyy");
         cell++;
 //        lesson.setGroup(groupRepository.findById(groupid).get());
         if (!Objects.equals(myExcelSheet.getRow(row).getCell(cell).getStringCellValue(), "")) {
@@ -331,9 +333,7 @@ public class Initialization {
 
                 cell += 3;
                 lesson.setLocation(String.valueOf(myExcelSheet.getRow(row).getCell(cell).getStringCellValue())); // Внесение Кабинета
-
                 lesson.setGroup(groupId.get());
-                System.out.println();
 
                 lessonRepository.save(lesson);
             } else {
@@ -344,7 +344,6 @@ public class Initialization {
             cell += 2;
             logicalSub2(row, cell, para1, weekOdd, datOfWeek, myExcelSheet, groupId);
         }
-
     }
 
     public void logicalSub1(Lesson lesson, int row, int cell, int para, int weekOdd, DayOfWeek datOfWeek, XSSFSheet myExcelSheet, Optional<Group> groupId) {

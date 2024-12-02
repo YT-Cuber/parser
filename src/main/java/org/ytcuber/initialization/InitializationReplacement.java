@@ -13,12 +13,13 @@ import org.ytcuber.database.model.Replacement;
 import org.ytcuber.database.repository.GroupRepository;
 import org.ytcuber.database.repository.ReplacementRepository;
 import org.ytcuber.database.types.DayOfWeek;
-import org.ytcuber.parser.GroupProcessor;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Date;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -31,26 +32,27 @@ public class InitializationReplacement {
     private GroupRepository groupRepository;
     @Autowired
     private ReplacementRepository replacementRepository;
-    private Initialization initialization;
-    private GroupProcessor groupProcessor;
 
     @Autowired
-    public void ApplicationInitializer(GroupProcessor groupProcessor, GroupRepository groupRepository) {
-        this.groupProcessor = groupProcessor;
+    public void ApplicationInitializer(GroupRepository groupRepository) {
         this.groupRepository = groupRepository;
     }
 
     @PostConstruct
-    public void init() throws IOException {
+    private void init() {
+        System.out.println("Можно написать инициализацию, но я не буду");
+    }
 
-        String replacementDate = "28.11.24-30.11.24";
+    public void processExcelReplacementParse() throws IOException, ParseException {
+        String replacementDate = "02.12.24-04.12.24";
+//        replacementDate = "test2";
         String inputFilePath = "./mainexcel/replacement/" + replacementDate + ".xlsx";
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
         minusUnion(inputFilePath);
         minusUnion(inputFilePath);
 
-        List<Replacement> lessonsList = parseExcelReplacement(myExcelSheet, null);
+        List<Replacement> lessonsList = parseExcelReplacement(myExcelSheet);
         replacementRepository.saveAllAndFlush(lessonsList);
     }
 
@@ -77,73 +79,290 @@ public class InitializationReplacement {
         }
     }
 
-    public List<Replacement> parseExcelReplacement(XSSFSheet myExcelSheet, Group groupId) {
+    public List<Replacement> parseExcelReplacement(XSSFSheet myExcelSheet) throws ParseException {
         final List<Replacement> replacementList = new ArrayList<>();
         int rowId = 1;
         int cellId = 0;
         int mainRowId;
-        Cell tmpCell;
         DayOfWeek dayOfWeek = null;
-        String replacementDate = null;
-        int para = 0;
+        String replacementDate;
+        int para;
         String replacementString = "";
-        String groupName = null;
-        int tmp = 0;
-        Replacement replacement = new Replacement();
-
-        try { dayOfWeek = parseDayOfWeek(myExcelSheet.getRow(rowId).getCell(cellId)); } catch (Exception ignored) {}
+        int tmp = 1;
+        boolean isDay = false;
+        int limit = 0;
+        int tmpCellId;
+        int tmpLimit = 4;
+        boolean isEndReplacement = false;
+        try {
+            dayOfWeek = parseDayOfWeek(myExcelSheet.getRow(rowId).getCell(cellId));
+        } catch (Exception ignored) {
+        }
         while (dayOfWeek == null) {
             rowId++;
-            try { dayOfWeek = parseDayOfWeek(myExcelSheet.getRow(rowId).getCell(cellId)); } catch (Exception ignored) {}
+            try {
+                dayOfWeek = parseDayOfWeek(myExcelSheet.getRow(rowId).getCell(cellId));
+            } catch (Exception ignored) {
+            }
         }
         mainRowId = rowId - 1;
-        dayOfWeek = parseDayOfWeek(myExcelSheet.getRow(rowId).getCell(cellId)); // День недели
-        cellId += 1;
-        replacementDate = myExcelSheet.getRow(rowId).getCell(cellId).getStringCellValue(); // Дата замены
-//        while (tmp == 0) {
-//        tmpCell = myExcelSheet.getRow(rowId).getCell(cellId);
-        logicalReplacementAll(replacement, dayOfWeek, replacementDate, para, replacementString, groupName, myExcelSheet, mainRowId, cellId, rowId);
-//        dayOfWeek = parseDayOfWeek(myExcelSheet.getRow(rowId).getCell(cellId));
-//        cellId += 1;
-//        replacementDate = myExcelSheet.getRow(rowId).getCell(cellId).getStringCellValue(); // Внесение Даты замены
-//        cellId += 1;
-//        para = (int) myExcelSheet.getRow(rowId).getCell(cellId).getNumericCellValue(); // Внесение Номер пары
-//        cellId += 1;
-//        try { replacementString = myExcelSheet.getRow(rowId).getCell(cellId).getStringCellValue(); } catch (Exception ignored) {} // Внесение Предмет (если есть)
-//        groupName = myExcelSheet.getRow(mainRowId).getCell(cellId).getStringCellValue();
-
-//        }
+        for (int i = 1; i <= 3; i++) {
+            while (!isEndReplacement) {
+                dayOfWeek = parseDayOfWeek(myExcelSheet.getRow(rowId).getCell(cellId)); // День недели
+                cellId++;
+                replacementDate = myExcelSheet.getRow(rowId).getCell(cellId).getStringCellValue(); // Дата замены
+                cellId++;
+                tmpCellId = cellId;
+                tmpLimit = countLessons(tmpLimit, myExcelSheet, rowId, cellId);
+                while (tmp <= tmpLimit) {
+                    para = (int) myExcelSheet.getRow(rowId).getCell(cellId).getNumericCellValue(); // Внесение Номер пары
+                    cellId++;
+                    while (!isDay) {
+                        isDay = logicalReplacementAll(dayOfWeek, replacementDate, para, replacementString, myExcelSheet, mainRowId, cellId, rowId, limit);
+                        cellId++;
+                        if (tmp == 1) {
+                            boolean isEnd = isEndReplacement(rowId, cellId, myExcelSheet, mainRowId);
+                            if (isEnd) {
+                                System.out.println("Замен дальше нет");
+                                isEndReplacement = true;
+                                cellId--;
+                                break;
+                            }
+                        }
+                    }
+                    if (tmp == 1) {
+                        limit = cellId;
+                    }
+                    isDay = false;
+                    cellId = tmpCellId;
+                    rowId++;
+                    tmp++;
+                }
+                cellId = limit;
+                if(i == 1) {
+                    rowId = mainRowId + i;
+                } else if (i == 2) {
+                    rowId = mainRowId + i + tmpLimit;
+                } else if (i == 3) {
+                    rowId = mainRowId + i + tmpLimit + tmpLimit;
+                }
+                tmp = 1;
+                limit = 0;
+            }
+            cellId = 0;
+            rowId = mainRowId + 2 + tmpLimit;
+            if (i == 2) {
+                rowId = mainRowId + 3 + tmpLimit + tmpLimit;
+            }
+            isEndReplacement = false;
+        }
         return replacementList;
     }
 
-    public void logicalReplacementAll(Replacement replacement, DayOfWeek dayOfWeek, String replacementDate, int para, String replacementString, String groupName, XSSFSheet myExcelSheet, int mainRowId, int cellId, int rowId) {
-        logicalReplacement(replacement, dayOfWeek, replacementDate, para, replacementString, groupName, myExcelSheet, mainRowId, cellId, rowId);
-        cellId += 3;
-        dayOfWeek = parseDayOfWeek(myExcelSheet.getRow(rowId).getCell(cellId));
-        if(dayOfWeek == null) {
+    public boolean logicalReplacementAll( DayOfWeek dayOfWeek, String replacementDate, int para, String replacementString, XSSFSheet myExcelSheet, int mainRowId, int cellId, int rowId, int limit) throws ParseException {
+        if (limit == 0) {
+            logicalReplacement(dayOfWeek, replacementDate, para, replacementString, myExcelSheet, mainRowId, cellId, rowId);
+            cellId++;
+            dayOfWeek = parseDayOfWeek(myExcelSheet.getRow(rowId).getCell(cellId));
+            return dayOfWeek != null;
+        } else {
+            while (cellId <= limit) {
+                logicalReplacement(dayOfWeek, replacementDate, para, replacementString, myExcelSheet, mainRowId, cellId, rowId);
+                cellId++;
+            }
+            return true;
+        }
+    }
+
+    public void logicalReplacement(DayOfWeek dayOfWeek, String replacementDate, int para, String replacementString, XSSFSheet myExcelSheet, int mainRowId, int cellId, int rowId) throws ParseException {
+        String teacher = "";
+        int subgroup = 0;
+        String para1 = "";
+        String para2 = "";
+        Replacement replacement = new Replacement();
+        SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yyyy");
+        try { replacementString = myExcelSheet.getRow(rowId).getCell(cellId).getStringCellValue(); } catch (Exception ignored) {} // Внесение Предмет (если есть)
+        String subject = replacementString;
+        if(replacementString.startsWith("\n")) {
+            replacementString = replacementString.replaceFirst("\n", "");
+        }
+        if(replacementString.contains("\n2.")) {
+            String[] parts = replacementString.split("\n2.", 2); // Разделяет только на Учителя и оставшееся
+            para1 = parts[0];
+            para2 = parts[1];
+            para2 = "2." + para2;
+        }
+
+        // Типа добаление второй пары
+        if (!para2.equals("")) {
+            if(para2.contains("\n")) {
+                try {
+                    String[] parts = para2.split("\n", 2); // Разделяет только на Учителя и оставшееся
+                    subject = parts[0];
+                    teacher = parts[1];
+                } catch (Exception ignored) {}
+            }
+            subject = subject.split(2 + ". ")[1];
+            subgroup = 2;
+
+            String groupName = myExcelSheet.getRow(mainRowId).getCell(cellId).getStringCellValue();
+            Optional<Group> groupId = groupRepository.findByGroupName(groupName);
+            // Группа не найдена в БД
+            if (groupId.isEmpty()) {
+                groupId = groupRepository.findByGroupName("АХАХА");
+            }
+            // Группа содержит "/"
+            if (groupName.contains("/")) {
+                String result = groupName.split("/")[0];
+                groupId = groupRepository.findByGroupName(result);
+                if (groupId.isEmpty()) {
+                    groupId = groupRepository.findByGroupName("АХАХА");
+                } else {
+                    groupId = groupRepository.findByGroupName(result);
+                }
+            }
+
+            replacement.setOrdinal(para);
+            replacement.setDatOfWeek(dayOfWeek);
+            replacement.setSubject(subject);
+            replacement.setDate(new Date(formatter.parse(replacementDate).getTime()));
+            replacement.setGroup(groupId.get());
+
+            replacement.setSubgroup(subgroup); // Подгруппа
+            replacement.setTeacher(teacher); // Преподаватель
+            replacement.setLocation(null); // Кабинет
+
+            replacementRepository.save(replacement);
+
+            replacement = new Replacement();
+        }
+
+        if (!para1.equals("")) {
+            subject = para1;
+            teacher = "";
+
+            if(para1.contains("\n")) {
+                try {
+                    String[] parts = para1.split("\n", 2); // Разделяет только на Учителя и оставшееся
+                    subject = parts[0];
+                    teacher = parts[1];
+                } catch (Exception ignored) {}
+            }
+            try {
+                subject = subject.split(1 + ". ")[1];
+            } catch (Exception ignored) {}
+            subgroup = 1;
+
+            String groupName = myExcelSheet.getRow(mainRowId).getCell(cellId).getStringCellValue();
+            Optional<Group> groupId = groupRepository.findByGroupName(groupName);
+            // Группа не найдена в БД
+            if (groupId.isEmpty()) {
+                groupId = groupRepository.findByGroupName("АХАХА");
+            }
+            // Группа содержит "/"
+            if (groupName.contains("/")) {
+                String result = groupName.split("/")[0];
+                groupId = groupRepository.findByGroupName(result);
+                if (groupId.isEmpty()) {
+                    groupId = groupRepository.findByGroupName("АХАХА");
+                } else {
+                    groupId = groupRepository.findByGroupName(result);
+                }
+            }
+
+            replacement.setOrdinal(para);
+            replacement.setDatOfWeek(dayOfWeek);
+            replacement.setSubject(subject);
+            replacement.setDate(new Date(formatter.parse(replacementDate).getTime()));
+            replacement.setGroup(groupId.get());
+
+            replacement.setSubgroup(subgroup); // Подгруппа
+            replacement.setTeacher(teacher); // Преподаватель
+            replacement.setLocation(null); // Кабинет
+
+            replacementRepository.save(replacement);
+        } else if(replacementString.contains("\n")) {
+            try {
+                String[] parts = replacementString.split("\n", 2); // Разделяет только на Учителя и оставшееся
+                subject = parts[0];
+                teacher = parts[1];
+            } catch (Exception ignored) {}
+        }
+        if (para1.equals("") && para2.equals("")) {
+            for (int number = 0; number <= 10; number++) {
+                String tmp = number + ". ";
+                if (replacementString.startsWith(tmp)) {
+                    subgroup = number;
+                    subject = subject.split(tmp)[1];
+                    break;
+                }
+            }
+            String groupName = myExcelSheet.getRow(mainRowId).getCell(cellId).getStringCellValue();
+            Optional<Group> groupId = groupRepository.findByGroupName(groupName);
+            // Группа не найдена в БД
+            if (groupId.isEmpty()) {
+                groupId = groupRepository.findByGroupName("АХАХА");
+            }
+            // Группа содержит "/"
+            if (groupName.contains("/")) {
+                String result = groupName.split("/")[0];
+                groupId = groupRepository.findByGroupName(result);
+                if (groupId.isEmpty()) {
+                    groupId = groupRepository.findByGroupName("АХАХА");
+                } else {
+                    groupId = groupRepository.findByGroupName(result);
+                }
+            }
+
+            if (!replacementString.equals("")) {
+                replacement.setOrdinal(para);
+                replacement.setDatOfWeek(dayOfWeek);
+                replacement.setSubject(subject);
+                replacement.setDate(new Date(formatter.parse(replacementDate).getTime()));
+                replacement.setGroup(groupId.get());
+
+                replacement.setSubgroup(subgroup); // Подгруппа
+                replacement.setTeacher(teacher); // Преподаватель
+                replacement.setLocation(null); // Кабинет
+
+                replacementRepository.save(replacement);
+            }
 
         }
     }
 
-    public void logicalReplacement(Replacement replacement, DayOfWeek dayOfWeek, String replacementDate, int para, String replacementString, String groupName, XSSFSheet myExcelSheet, int mainRowId, int cellId, int rowId) {
-        cellId += 1;
-        para = (int) myExcelSheet.getRow(rowId).getCell(cellId).getNumericCellValue(); // Внесение Номер пары
-        cellId += 1;
-        try { replacementString = myExcelSheet.getRow(rowId).getCell(cellId).getStringCellValue(); } catch (Exception ignored) {} // Внесение Предмет (если есть)
-        groupName = myExcelSheet.getRow(mainRowId).getCell(cellId).getStringCellValue();
-        Optional<Group> groupId = groupRepository.findByGroupName(groupName);
-        if (replacementString != null) {
-            replacement.setOrdinal(para);
-            replacement.setDatOfWeek(dayOfWeek);
-            replacement.setSubject(replacementString);
-            replacement.setDate(Date.valueOf(replacementDate));
-            replacement.setGroup(groupId.get());
-            replacementRepository.save(replacement);
+    public int countLessons(Integer tmpLimit, XSSFSheet myExcelSheet, int rowId, int cellId) {
+        int tmpLimitInt;
+        tmpLimitInt = (int) myExcelSheet.getRow(rowId).getCell(cellId).getNumericCellValue();
+        while (tmpLimitInt != 0) {
+            try {
+                Cell cell = myExcelSheet.getRow(rowId).getCell(cellId);
+                if (cell != null && cell.getCellType() == CellType.NUMERIC) {
+                    tmpLimitInt = (int) cell.getNumericCellValue();
+                    tmpLimit = tmpLimitInt;
+                } else {
+                    tmpLimitInt = 0; // Не числовое значение
+                }
+            } catch (Exception e) {
+                // Обработка ошибки, если ячейка недоступна
+                tmpLimitInt = 0;
+            }
+            rowId++;
         }
-//        private Integer subgroup; // Подгруппа
-//        private String teacher; // Преподаватель
-//        private String location; // Кабинет
-//        private Date date; // Дата замены
+        return tmpLimit;
+    }
+
+    public boolean isEndReplacement(Integer rowId, Integer cellId, XSSFSheet myExcelSheet, Integer mainRowId) {
+        Cell tmpCell = myExcelSheet.getRow(mainRowId).getCell(cellId);
+        DayOfWeek dayOfWeek = parseDayOfWeek(myExcelSheet.getRow(rowId).getCell(cellId));
+        String groupName;
+        if (tmpCell == null || tmpCell.getCellType() != CellType.STRING) {
+            groupName = null;
+        } else {
+            groupName = tmpCell.getStringCellValue();
+        }
+
+        return dayOfWeek == null && groupName == null;
     }
 
     public DayOfWeek parseDayOfWeek(Cell cell) {
