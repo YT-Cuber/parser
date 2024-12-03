@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.ytcuber.database.model.Group;
 import org.ytcuber.database.model.Replacement;
 import org.ytcuber.database.repository.GroupRepository;
+import org.ytcuber.database.repository.LocationRepository;
 import org.ytcuber.database.repository.ReplacementRepository;
 import org.ytcuber.database.types.DayOfWeek;
 
@@ -32,10 +33,12 @@ public class InitializationReplacement {
     private GroupRepository groupRepository;
     @Autowired
     private ReplacementRepository replacementRepository;
-
     @Autowired
-    public void ApplicationInitializer(GroupRepository groupRepository) {
+    private LocationRepository locationRepository;
+    @Autowired
+    public void ApplicationInitializer(GroupRepository groupRepository, LocationRepository locationRepository) {
         this.groupRepository = groupRepository;
+        this.locationRepository = locationRepository;
     }
 
     @PostConstruct
@@ -92,6 +95,12 @@ public class InitializationReplacement {
         int tmpCellId;
         int tmpLimit = 4;
         boolean isEndReplacement = false;
+        // Запрашиваем все названия кабинетов один раз и сохраняем в список
+        List<String> locationNames = new ArrayList<>();
+        int lastId = locationRepository.findLastId();
+        for (int i = 1; i <= lastId; i++) {
+            locationNames.add(locationRepository.findNameById(i));
+        }
         try {
             dayOfWeek = parseDayOfWeek(myExcelSheet.getRow(rowId).getCell(cellId));
         } catch (Exception ignored) {
@@ -116,7 +125,7 @@ public class InitializationReplacement {
                     para = (int) myExcelSheet.getRow(rowId).getCell(cellId).getNumericCellValue(); // Внесение Номер пары
                     cellId++;
                     while (!isDay) {
-                        isDay = logicalReplacementAll(dayOfWeek, replacementDate, para, replacementString, myExcelSheet, mainRowId, cellId, rowId, limit);
+                        isDay = logicalReplacementAll(locationNames, dayOfWeek, replacementDate, para, replacementString, myExcelSheet, mainRowId, cellId, rowId, limit);
                         cellId++;
                         if (tmp == 1) {
                             boolean isEnd = isEndReplacement(rowId, cellId, myExcelSheet, mainRowId);
@@ -157,26 +166,27 @@ public class InitializationReplacement {
         return replacementList;
     }
 
-    public boolean logicalReplacementAll( DayOfWeek dayOfWeek, String replacementDate, int para, String replacementString, XSSFSheet myExcelSheet, int mainRowId, int cellId, int rowId, int limit) throws ParseException {
+    public boolean logicalReplacementAll(List<String> locationNames, DayOfWeek dayOfWeek, String replacementDate, int para, String replacementString, XSSFSheet myExcelSheet, int mainRowId, int cellId, int rowId, int limit) throws ParseException {
         if (limit == 0) {
-            logicalReplacement(dayOfWeek, replacementDate, para, replacementString, myExcelSheet, mainRowId, cellId, rowId);
+            logicalReplacement(locationNames, dayOfWeek, replacementDate, para, replacementString, myExcelSheet, mainRowId, cellId, rowId);
             cellId++;
             dayOfWeek = parseDayOfWeek(myExcelSheet.getRow(rowId).getCell(cellId));
             return dayOfWeek != null;
         } else {
             while (cellId <= limit) {
-                logicalReplacement(dayOfWeek, replacementDate, para, replacementString, myExcelSheet, mainRowId, cellId, rowId);
+                logicalReplacement(locationNames, dayOfWeek, replacementDate, para, replacementString, myExcelSheet, mainRowId, cellId, rowId);
                 cellId++;
             }
             return true;
         }
     }
 
-    public void logicalReplacement(DayOfWeek dayOfWeek, String replacementDate, int para, String replacementString, XSSFSheet myExcelSheet, int mainRowId, int cellId, int rowId) throws ParseException {
+    public void logicalReplacement(List<String> locationNames, DayOfWeek dayOfWeek, String replacementDate, int para, String replacementString, XSSFSheet myExcelSheet, int mainRowId, int cellId, int rowId) throws ParseException {
         String teacher = "";
         int subgroup = 0;
         String para1 = "";
         String para2 = "";
+        String location = "";
         Replacement replacement = new Replacement();
         SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yyyy");
         try { replacementString = myExcelSheet.getRow(rowId).getCell(cellId).getStringCellValue(); } catch (Exception ignored) {} // Внесение Предмет (если есть)
@@ -223,15 +233,25 @@ public class InitializationReplacement {
                 }
             }
 
+            // Используем сохранённые названия кабинетов для проверки
+            for (String locationName : locationNames) {
+                if (subject.contains(locationName)) {
+                    String[] parts = subject.split(locationName, 2); // Разделяет на предмет и локацию
+                    subject = parts[0].trim();
+                    location = locationName;
+                    break; // Прерываем, так как локация найдена
+                }
+            }
+
             replacement.setOrdinal(para);
             replacement.setDatOfWeek(dayOfWeek);
-            replacement.setSubject(subject);
+            replacement.setSubject(subject.trim());
             replacement.setDate(new Date(formatter.parse(replacementDate).getTime()));
             replacement.setGroup(groupId.get());
 
             replacement.setSubgroup(subgroup); // Подгруппа
-            replacement.setTeacher(teacher); // Преподаватель
-            replacement.setLocation(null); // Кабинет
+            replacement.setTeacher(teacher.trim()); // Преподаватель
+            replacement.setLocation(location); // Кабинет
 
             replacementRepository.save(replacement);
 
@@ -270,16 +290,25 @@ public class InitializationReplacement {
                     groupId = groupRepository.findByGroupName(result);
                 }
             }
+            // Используем сохранённые названия кабинетов для проверки
+            for (String locationName : locationNames) {
+                if (subject.contains(locationName)) {
+                    String[] parts = subject.split(locationName, 2); // Разделяет на предмет и локацию
+                    subject = parts[0].trim();
+                    location = locationName;
+                    break; // Прерываем, так как локация найдена
+                }
+            }
 
             replacement.setOrdinal(para);
             replacement.setDatOfWeek(dayOfWeek);
-            replacement.setSubject(subject);
+            replacement.setSubject(subject.trim());
             replacement.setDate(new Date(formatter.parse(replacementDate).getTime()));
             replacement.setGroup(groupId.get());
 
             replacement.setSubgroup(subgroup); // Подгруппа
-            replacement.setTeacher(teacher); // Преподаватель
-            replacement.setLocation(null); // Кабинет
+            replacement.setTeacher(teacher.trim()); // Преподаватель
+            replacement.setLocation(location); // Кабинет
 
             replacementRepository.save(replacement);
         } else if(replacementString.contains("\n")) {
@@ -304,37 +333,44 @@ public class InitializationReplacement {
                     break;
                 }
             }
-            String groupName = myExcelSheet.getRow(mainRowId).getCell(cellId).getStringCellValue();
-            Optional<Group> groupId = groupRepository.findByGroupName(groupName);
-            // Группа не найдена в БД
-            if (groupId.isEmpty()) {
-                groupId = groupRepository.findByGroupName("АХАХА");
-            }
-            // Группа содержит "/"
-            if (groupName.contains("/")) {
-                String result = groupName.split("/")[0];
-                groupId = groupRepository.findByGroupName(result);
+            if (!replacementString.equals("")) {
+                String groupName = myExcelSheet.getRow(mainRowId).getCell(cellId).getStringCellValue();
+                Optional<Group> groupId = groupRepository.findByGroupName(groupName);
+                // Группа не найдена в БД
                 if (groupId.isEmpty()) {
                     groupId = groupRepository.findByGroupName("АХАХА");
-                } else {
-                    groupId = groupRepository.findByGroupName(result);
                 }
-            }
-
-            if (!replacementString.equals("")) {
+                // Группа содержит "/"
+                if (groupName.contains("/")) {
+                    String result = groupName.split("/")[0];
+                    groupId = groupRepository.findByGroupName(result);
+                    if (groupId.isEmpty()) {
+                        groupId = groupRepository.findByGroupName("АХАХА");
+                    } else {
+                        groupId = groupRepository.findByGroupName(result);
+                    }
+                }
+                // Используем сохранённые названия кабинетов для проверки
+                for (String locationName : locationNames) {
+                    if (subject.contains(locationName)) {
+                        String[] parts = subject.split(locationName, 2); // Разделяет на предмет и локацию
+                        subject = parts[0].trim();
+                        location = locationName;
+                        break; // Прерываем, так как локация найдена
+                    }
+                }
                 replacement.setOrdinal(para);
                 replacement.setDatOfWeek(dayOfWeek);
-                replacement.setSubject(subject);
+                replacement.setSubject(subject.trim());
                 replacement.setDate(new Date(formatter.parse(replacementDate).getTime()));
                 replacement.setGroup(groupId.get());
 
                 replacement.setSubgroup(subgroup); // Подгруппа
-                replacement.setTeacher(teacher); // Преподаватель
-                replacement.setLocation(null); // Кабинет
+                replacement.setTeacher(teacher.trim()); // Преподаватель
+                replacement.setLocation(location); // Кабинет
 
                 replacementRepository.save(replacement);
             }
-
         }
     }
 

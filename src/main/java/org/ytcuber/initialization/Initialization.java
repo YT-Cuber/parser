@@ -13,6 +13,7 @@ import org.ytcuber.database.model.Group;
 import org.ytcuber.database.model.Lesson;
 import org.ytcuber.database.repository.GroupRepository;
 import org.ytcuber.database.repository.LessonRepository;
+import org.ytcuber.database.repository.LocationRepository;
 import org.ytcuber.database.types.DayOfWeek;
 
 import java.io.FileInputStream;
@@ -27,10 +28,12 @@ import java.util.*;
 public class Initialization {
     private LessonRepository lessonRepository;
     private GroupRepository groupRepository;
+    private LocationRepository locationRepository;
     @Autowired
-    public void ApplicationInitializer(LessonRepository lessonRepository, GroupRepository groupRepository) {
+    public void ApplicationInitializer(LessonRepository lessonRepository, GroupRepository groupRepository, LocationRepository locationRepository) {
         this.lessonRepository = lessonRepository;
         this.groupRepository = groupRepository;
+        this.locationRepository = locationRepository;
     }
 
     @PostConstruct

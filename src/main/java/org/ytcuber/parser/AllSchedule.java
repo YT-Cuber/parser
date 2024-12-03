@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.ytcuber.database.model.Group;
 import org.ytcuber.database.repository.GroupRepository;
 import org.ytcuber.initialization.Initialization;
+import org.ytcuber.initialization.InitializationLocations;
 import org.ytcuber.initialization.InitializationReplacement;
 
 import java.io.IOException;
@@ -19,18 +20,22 @@ public class AllSchedule {
     private GroupProcessor groupProcessor;
     private GroupRepository groupRepository;
     private InitializationReplacement initializationReplacement;
+    private InitializationLocations initializationLocations;
     @Autowired
-    public void ApplicationInitializer(GroupProcessor groupProcessor, Initialization initialization, GroupRepository groupRepository, InitializationReplacement initializationReplacement) {
+    public void ApplicationInitializer(InitializationLocations initializationLocations, GroupProcessor groupProcessor, Initialization initialization, GroupRepository groupRepository, InitializationReplacement initializationReplacement) {
         this.initialization = initialization;
         this.groupProcessor = groupProcessor;
         this.groupRepository = groupRepository;
         this.initializationReplacement = initializationReplacement;
+        this.initializationLocations = initializationLocations;
     }
 
     @PostConstruct
     public void init() throws IOException, ParseException {
+        // Заполнение групп
         for (int i = 1; i <= 4; i++) { groupProcessor.processGroups(String.valueOf(i)); }
-
+        // Заполнение кабинетов
+        initializationLocations.processLocationParse("Cab2");
         // Гпуппа заглушка (для не существующих групп)
             List<Group> groupsToSave = new ArrayList<>();
             Group group = new Group();
@@ -38,7 +43,9 @@ public class AllSchedule {
             group.setSquad(10);
             groupsToSave.add(group);
             groupRepository.saveAll(groupsToSave);
+        // Заполнение замен
         initializationReplacement.processExcelReplacementParse("02.12.24-04.12.24");
+        // Заполнение расписания
         int lastId = groupRepository.findLastId() - 1;
         for (int i = 1; i <= lastId; i++) {
             String groupName = String.valueOf(groupRepository.findNameById(i));
