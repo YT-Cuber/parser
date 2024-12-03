@@ -38,12 +38,12 @@ public class AllSchedule {
             group.setSquad(10);
             groupsToSave.add(group);
             groupRepository.saveAll(groupsToSave);
-        initializationReplacement.processExcelReplacementParse();
-//        int lastId = groupRepository.findLastId() - 1;
-//        for (int i = 1; i <= lastId; i++) {
-//            String groupName = String.valueOf(groupRepository.findNameById(i));
-//            initialization.processExcelParse(groupName);
-//        }
+        initializationReplacement.processExcelReplacementParse("02.12.24-04.12.24");
+        int lastId = groupRepository.findLastId() - 1;
+        for (int i = 1; i <= lastId; i++) {
+            String groupName = String.valueOf(groupRepository.findNameById(i));
+            initialization.processExcelParse(groupName);
+        }
 //        Нет субботы у 25, 54, 67, Странная фигня у КС-23-1
 //        String groupName = String.valueOf(groupRepository.findNameById(38)); initialization.processExcelParse(groupName);
     }

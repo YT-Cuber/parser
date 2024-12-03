@@ -43,9 +43,7 @@ public class InitializationReplacement {
         System.out.println("Можно написать инициализацию, но я не буду");
     }
 
-    public void processExcelReplacementParse() throws IOException, ParseException {
-        String replacementDate = "02.12.24-04.12.24";
-//        replacementDate = "test2";
+    public void processExcelReplacementParse(String replacementDate) throws IOException, ParseException {
         String inputFilePath = "./mainexcel/replacement/" + replacementDate + ".xlsx";
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
@@ -186,6 +184,9 @@ public class InitializationReplacement {
         if(replacementString.startsWith("\n")) {
             replacementString = replacementString.replaceFirst("\n", "");
         }
+        if(replacementString.endsWith("\n")) {
+            replacementString = replacementString.substring(0, replacementString.length() - 1);
+        }
         if(replacementString.contains("\n2.")) {
             String[] parts = replacementString.split("\n2.", 2); // Разделяет только на Учителя и оставшееся
             para1 = parts[0];
@@ -292,8 +293,14 @@ public class InitializationReplacement {
             for (int number = 0; number <= 10; number++) {
                 String tmp = number + ". ";
                 if (replacementString.startsWith(tmp)) {
+
+                    if (number == 10) {
+                        subject = subject.substring(4);
+                    } else {
+                        subject = subject.substring(3);
+                    }
                     subgroup = number;
-                    subject = subject.split(tmp)[1];
+//                    subject = subject.split(tmp)[1];
                     break;
                 }
             }
