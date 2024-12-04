@@ -432,14 +432,6 @@ public class Initialization {
                 tmpSub = 1;
             }
         } else if (cellValue.startsWith("(КП)") || cellValue.startsWith("(Лаб)") || cellValue.startsWith("(Пр)") || cellValue.startsWith("Ин.яз")) {
-            if (cellValue2 == null || cellValue2.isEmpty() || cellValue2 == "") {
-                if (cellValue3.isEmpty() || cellValue3 == null || cellValue3 == "") {
-                    tmpSub = 1;
-                } else {
-                    tmpSub = 0;
-                }
-                tmpSub = 1;
-            }
             tmpSub = 1;
         } else {
             tmpSub = 0;
