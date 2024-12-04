@@ -3,6 +3,7 @@ package org.ytcuber.telegrambot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -14,8 +15,11 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.ytcuber.database.dto.LessonDTO;
 import org.ytcuber.database.dto.ReplacementDTO;
 import org.ytcuber.database.repository.GroupRepository;
+import org.ytcuber.database.types.DayOfWeek;
 import org.ytcuber.handler.GroupSchedule;
 
+import java.time.LocalDate;
+import java.time.temporal.WeekFields;
 import java.util.*;
 
 @Component
@@ -30,18 +34,22 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private static final Logger logger = LoggerFactory.getLogger(TelegramBot.class);
-    private Map<String, String> userSelections = new HashMap<>(); // Хранение состояния пользователей
+    private final Map<String, String> userSelections = new HashMap<>(); // Хранение состояния пользователей
+
+    @Value("${telegrambots.token}")
+    private String botToken;
+
+    @Value("${telegrambots.username}")
+    private String botUsername;
 
     @Override
     public String getBotUsername() {
-        logger.info("Bot username: {}", "MpK_Mgn_Bot");
-        return "MpK_Mgn_Bot";
+        return botUsername;
     }
 
     @Override
     public String getBotToken() {
-        logger.info("Bot token is set.");
-        return "7876544700:AAHm643iVX8MPp4hcSfgqksMK2DOtm3ZMTU";
+        return botToken;
     }
 
     private enum UserState {
@@ -60,7 +68,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private Map<String, UserSession> userSessions = new HashMap<>(); // Сессии пользователей
+    private final Map<String, UserSession> userSessions = new HashMap<>(); // Сессии пользователей
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -105,9 +113,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     message.setReplyMarkup(createMainKeyboard());
                     userSession.state = UserState.NONE;
                 }
-                default -> {
-                    handleStatefulCommands(userMessage, message, userSession); // Обработка состояний пользователя
-                }
+                default -> handleStatefulCommands(userMessage, message, userSession); // Обработка состояний пользователя
             }
 
             try {
@@ -121,12 +127,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleStatefulCommands(String userMessage, SendMessage message, UserSession userSession) {
         switch (userSession.state) {
-            case WAITING_FOR_GROUP -> {
-                handleGroupInput(userMessage, message, userSession); // Обработка ввода группы
-            }
-            case WAITING_FOR_SUBGROUP -> {
-                handleSubgroupInput(userMessage, message, userSession); // Обработка ввода подгруппы
-            }
+            case WAITING_FOR_GROUP -> handleGroupInput(userMessage, message, userSession); // Обработка ввода группы
+            case WAITING_FOR_SUBGROUP -> handleSubgroupInput(userMessage, message, userSession); // Обработка ввода подгруппы
             default -> {
                 message.setText("Неизвестная команда. Используйте кнопки на клавиатуре.");
                 message.setReplyMarkup(createMainKeyboard());
@@ -156,10 +158,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         if ("1".equals(userMessage) || "2".equals(userMessage)) {
             userSession.subgroup = Integer.parseInt(userMessage);
             userSession.state = UserState.NONE;
-
             try {
+                // Опеределяем четность недели
+                boolean isEvenWeek = isEvenWeek();
+                int weekOdd = isEvenWeek ? 2 : 1;
                 // Получаем расписание
-                List<Object> schedule = groupSchedule.giveSchedule(userSession.groupName, userSession.subgroup, 1);
+                List<Object> schedule = groupSchedule.giveSchedule(userSession.groupName, userSession.subgroup, weekOdd);
                 String scheduleText = buildScheduleText(schedule, userSession.groupName, userSession.subgroup);
                 message.setText(scheduleText);
                 message.setReplyMarkup(createMainKeyboard());
@@ -173,27 +177,30 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private String buildScheduleText(List<Object> schedule, String groupName, int subgroup) {
-        Map<String, List<Object>> scheduleByDay = new LinkedHashMap<>();
+        Map<DayOfWeek, List<Object>> scheduleByDay = new LinkedHashMap<>();
         for (Object item : schedule) {
-            String dayOfWeek;
+            DayOfWeek dayOfWeek = null;
             if (item instanceof LessonDTO lesson) {
-                dayOfWeek = String.valueOf(lesson.getDayOfWeek());
+                dayOfWeek = DayOfWeek.valueOf(String.valueOf(lesson.getDayOfWeek()));
             } else if (item instanceof ReplacementDTO replacement) {
-                dayOfWeek = String.valueOf(replacement.getDatOfWeek());
-            } else {
-                continue;
+                dayOfWeek = DayOfWeek.valueOf(String.valueOf(replacement.getDatOfWeek()));
             }
-            scheduleByDay.computeIfAbsent(dayOfWeek, k -> new ArrayList<>()).add(item);
+            if (dayOfWeek != null) {
+                scheduleByDay.computeIfAbsent(dayOfWeek, k -> new ArrayList<>()).add(item);
+            }
         }
 
         StringBuilder scheduleText = new StringBuilder();
         scheduleText.append(String.format("📚 Расписание для группы %s подгруппы %d:\n\n", groupName, subgroup));
 
-        for (Map.Entry<String, List<Object>> entry : scheduleByDay.entrySet()) {
-            String dayOfWeek = entry.getKey();
+        for (Map.Entry<DayOfWeek, List<Object>> entry : scheduleByDay.entrySet()) {
+            DayOfWeek dayOfWeek = entry.getKey();
             List<Object> daySchedule = entry.getValue();
 
-            scheduleText.append(String.format("📅 %s:\n", dayOfWeek));
+            // Получаем русское название дня недели
+            String dayOfWeekName = dayOfWeek.label;
+
+            scheduleText.append(String.format("📅 %s:\n", dayOfWeekName));
 
             for (Object item : daySchedule) {
                 if (item instanceof LessonDTO lesson) {
@@ -217,9 +224,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             scheduleText.append("\n");
         }
-
         return scheduleText.toString();
     }
+
 
     private ReplyKeyboardMarkup createMainKeyboard() {
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
@@ -297,4 +304,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         return keyboardMarkup;
     }
 
+    public static boolean isEvenWeek() {
+        LocalDate today = LocalDate.now();
+
+        // Если сегодня воскресенье, сдвигаем на один день вперед
+        if (today.getDayOfWeek() == java.time.DayOfWeek.SUNDAY) {
+            today = today.plusDays(1);
+        }
+
+        WeekFields weekFields = WeekFields.of(Locale.getDefault());
+        int weekNumber = today.get(weekFields.weekOfWeekBasedYear());
+        return weekNumber % 2 == 0;
+    }
 }

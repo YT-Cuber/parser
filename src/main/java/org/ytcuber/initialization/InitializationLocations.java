@@ -35,8 +35,8 @@ public class InitializationLocations {
     }
 
     public void processLocationParse(String fileName) throws IOException {
-
-        String inputFilePath = "./mainexcel/locations/" + fileName + ".xlsx";
+//        String inputFilePath = "./mainexcel/locations/" + fileName + ".xlsx";
+        String inputFilePath = "/home/ytcuber/site/mainexcel/locations/" + fileName + ".xlsx";
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
 

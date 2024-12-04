@@ -34,10 +34,6 @@ public class GroupSchedule {
 
     public List<Object> giveSchedule(String groupName, Integer subgroup, Integer odd) throws Exception {
 
-//        String groupName = "ИСпПК-21-1";
-//        Integer subgroup = 2;
-//        Integer odd = 1;
-
         Integer groupId = groupRepository.findByName(groupName);
         List<Lesson> lessons = lessonRepository.findLessonsByGroupIdAndSubgroupAndOdd(groupId, subgroup, odd);
         List<Replacement> replacements = replacementRepository.findReplacementsByGroupIdAndSubgroup(groupId, subgroup);
@@ -51,7 +47,6 @@ public class GroupSchedule {
                         lesson.getTeacher()
                 ))
                 .toList();
-//        lessonDTOS.forEach(System.out::println);
 
         List<ReplacementDTO> replacementDTOS = replacements.stream()
                 .map(replacement -> new ReplacementDTO(
@@ -63,7 +58,6 @@ public class GroupSchedule {
                         replacement.getTeacher()
                 ))
                 .toList();
-//        replacementDTOS.forEach(System.out::println);
 
         // Создаём результирующий список
         List<Object> mergedList = new ArrayList<>(lessonDTOS);
@@ -90,7 +84,6 @@ public class GroupSchedule {
                 mergedList.add(replacement);
             }
         }
-
 
         return mergedList;
     }

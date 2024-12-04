@@ -47,7 +47,8 @@ public class InitializationReplacement {
     }
 
     public void processExcelReplacementParse(String replacementDate) throws IOException, ParseException {
-        String inputFilePath = "./mainexcel/replacement/" + replacementDate + ".xlsx";
+//        String inputFilePath = "./mainexcel/replacement/" + replacementDate + ".xlsx";
+        String inputFilePath = "/home/ytcuber/site/mainexcel/replacement/" + replacementDate + ".xlsx";
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
         minusUnion(inputFilePath);

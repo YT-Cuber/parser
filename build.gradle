@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'org.ytcuber'
-version = '0.0.1-Version'
+version = '0.0.2-Version'
 
 java {
 	sourceCompatibility = '17'
@@ -37,9 +37,7 @@ dependencies {
 	implementation 'org.postgresql:postgresql:42.7.4'
 	implementation 'org.telegram:telegrambots:6.9.7.1'
 	implementation 'org.telegram:telegrambots-spring-boot-starter:6.9.7.1'
-//	implementation 'org.telegram:telegrambots:6.7.0'
-//	implementation 'org.telegram:telegrambots-spring-boot-starter:6.7.0'
-	
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.postgresql:postgresql'
 }

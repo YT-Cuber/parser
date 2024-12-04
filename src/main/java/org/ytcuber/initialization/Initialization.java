@@ -46,7 +46,9 @@ public class Initialization {
         Integer squadNum = groupRepository.findSquadByGroupName(groupName);
         Optional<Group> groupId = groupRepository.findByGroupName(groupName);
 
-        String inputFilePath = "./mainexcel/squad" + squadNum + "/" + groupName + ".xlsx";
+//        String inputFilePath = "./mainexcel/squad" + squadNum + "/" + groupName + ".xlsx";
+
+        String inputFilePath = "/home/ytcuber/site/mainexcel/squad" + squadNum + "/" + groupName + ".xlsx";
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
         minusUnion(inputFilePath); minusUnion(inputFilePath);
