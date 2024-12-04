@@ -12,7 +12,7 @@ import java.util.List;
 public interface ReplacementRepository extends JpaRepository<Replacement, Long> {
     @Query("SELECT r FROM Replacement r " +
             "WHERE (r.subgroup = :subgroup OR r.subgroup = 0) AND r.group.id = :groupId " +
-            "ORDER BY r.datOfWeek")
+            "ORDER BY r.datOfWeek, r.ordinal")
     List<Replacement> findReplacementsByGroupIdAndSubgroup(@Param("groupId") Integer groupId,
                                                            @Param("subgroup") Integer subgroup);
 }

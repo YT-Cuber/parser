@@ -65,16 +65,6 @@ public class GroupSchedule {
                 .toList();
 //        replacementDTOS.forEach(System.out::println);
 
-//        // Сверяем по getDayOfWeek и getOrdinal
-//        List<ReplacementDTO> matchedReplacements = replacementDTOS.stream()
-//                .filter(replacement -> lessonDTOS.stream()
-//                        .anyMatch(lesson ->
-//                                lesson.getDayOfWeek().equals(replacement.getDatOfWeek()) &&
-//                                        lesson.getOrdinal() == replacement.getOrdinal()))
-//                .toList();
-//
-//        // Вывод результатов
-//        matchedReplacements.forEach(System.out::println);
         // Создаём результирующий список
         List<Object> mergedList = new ArrayList<>(lessonDTOS);
 
@@ -101,8 +91,6 @@ public class GroupSchedule {
             }
         }
 
-        // Вывод результирующего списка
-//        mergedList.forEach(System.out::println);
 
         return mergedList;
     }

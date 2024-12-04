@@ -58,6 +58,7 @@ public class AllSchedule {
         // Запуск парсинга замен в отдельном потоке
         Callable<Void> replacementTask = () -> {
             initializationReplacement.processExcelReplacementParse("02.12.24-04.12.24");
+            initializationReplacement.processExcelReplacementParse("05.12.24-07.12.24");
             return null;
         };
 
@@ -84,8 +85,32 @@ public class AllSchedule {
         } finally {
             executorService.shutdown(); // Закрываем пул потоков
         }
-
-        List<Object> as = groupSchedule.giveSchedule("ИСпПК-21-1", 2, 1);
+//
+//        List<Object> as = groupSchedule.giveSchedule("ИСпПК-21-1", 2, 1);
+//
+//        // Красивый вывод результирующего списка
+//        System.out.println("=== Итоговый список уроков и замен ===");
+//        for (Object item : as) {
+//            if (item instanceof LessonDTO lesson) {
+//                System.out.printf(
+//                        "Урок: День недели: %s, Номер: %d, Локация: %s, Предмет: %s, Учитель: %s%n",
+//                        lesson.getDayOfWeek(),
+//                        lesson.getOrdinal(),
+//                        lesson.getLocation(),
+//                        lesson.getSubject(),
+//                        lesson.getTeacher()
+//                );
+//            } else if (item instanceof ReplacementDTO replacement) {
+//                System.out.printf(
+//                        "Замена: День недели: %s, Номер: %d, Локация: %s, Предмет: %s, Учитель: %s%n",
+//                        replacement.getDatOfWeek(),
+//                        replacement.getOrdinal(),
+//                        replacement.getLocation(),
+//                        replacement.getSubject(),
+//                        replacement.getTeacher()
+//                );
+//            }
+//        }
 
 //        // Заполнение замен
 //        initializationReplacement.processExcelReplacementParse("02.12.24-04.12.24");

@@ -17,7 +17,7 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
     @Query("SELECT l FROM Lesson l " +
             "WHERE (l.subgroup = :subgroup OR l.subgroup = 0) AND l.group.id = :groupId AND l.odd = :odd " +
-            "ORDER BY l.dayOfWeek")
+            "ORDER BY l.dayOfWeek, l.ordinal")
     List<Lesson> findLessonsByGroupIdAndSubgroupAndOdd(@Param("groupId") Integer groupId,
                                                           @Param("subgroup") Integer subgroup,
                                                           @Param("odd") Integer odd);
