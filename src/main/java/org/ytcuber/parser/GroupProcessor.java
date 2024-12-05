@@ -23,8 +23,8 @@ public class GroupProcessor {
     }
 
     public void processGroups(String squadNum) throws IOException {
-//        String folderPath = "./mainexcel/squad" + squadNum + "/";
-        String folderPath = "/home/ytcuber/site/mainexcel/squad" + squadNum + "/";
+        String folderPath = "./mainexcel/squad" + squadNum + "/";
+//        String folderPath = "/home/ytcuber/site/mainexcel/squad" + squadNum + "/";
         Path folder = Paths.get(folderPath);
 
         if (!Files.exists(folder) || !Files.isDirectory(folder)) {

@@ -17,8 +17,10 @@ import org.ytcuber.database.dto.ReplacementDTO;
 import org.ytcuber.database.repository.GroupRepository;
 import org.ytcuber.database.types.DayOfWeek;
 import org.ytcuber.handler.GroupSchedule;
+import org.ytcuber.handler.TeacherSchedule;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.WeekFields;
 import java.util.*;
 
@@ -27,14 +29,16 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Autowired
     private GroupRepository groupRepository;
     private GroupSchedule groupSchedule;
+    private TeacherSchedule teacherSchedule;
     @Autowired
-    public void ApplicationInitializer(GroupSchedule groupSchedule, GroupRepository groupRepository) {
+    public void ApplicationInitializer(GroupSchedule groupSchedule, GroupRepository groupRepository, TeacherSchedule teacherSchedule) {
         this.groupSchedule = groupSchedule;
         this.groupRepository = groupRepository;
+        this.teacherSchedule = teacherSchedule;
     }
 
     private static final Logger logger = LoggerFactory.getLogger(TelegramBot.class);
-    private final Map<String, String> userSelections = new HashMap<>(); // Хранение состояния пользователей
+//    private final Map<String, String> userSelections = new HashMap<>(); // Хранение состояния пользователей
 
     @Value("${telegrambots.token}")
     private String botToken;
@@ -55,6 +59,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private enum UserState {
         NONE, // Состояние по умолчанию
         WAITING_FOR_GROUP, // Ожидание ввода группы
+        WAITING_FOR_TEACHER, // Ожидание ввода преподавателя
         WAITING_FOR_SUBGROUP // Ожидание ввода подгруппы
     }
 
@@ -94,7 +99,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
                 case "преподаватель" -> {
                     message.setText("Введите фамилию преподавателя или выберите другую команду.");
-                    message.setReplyMarkup(createMainKeyboard()); // Подставляем клавиатуру
+                    userSession.state = UserState.WAITING_FOR_TEACHER; // Новое состояние
                 }
                 case "кабинет" -> {
                     message.setText("Укажите номер кабинета для получения информации.");
@@ -128,20 +133,47 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleStatefulCommands(String userMessage, SendMessage message, UserSession userSession) {
         switch (userSession.state) {
             case WAITING_FOR_GROUP -> handleGroupInput(userMessage, message, userSession); // Обработка ввода группы
-            case WAITING_FOR_SUBGROUP -> handleSubgroupInput(userMessage, message, userSession); // Обработка ввода подгруппы
+            case WAITING_FOR_SUBGROUP -> {
+                // Заменяем пробелы на дефисы
+                String sanitizedGroupName = userMessage.replace(" ", "-").trim();
+                handleSubgroupInput(sanitizedGroupName, message, userSession); // Обработка ввода подгруппы
+            }
+            case WAITING_FOR_TEACHER -> handleTeacherSchedule(userMessage, message); // Новый метод для преподавателя
             default -> {
+
                 message.setText("Неизвестная команда. Используйте кнопки на клавиатуре.");
                 message.setReplyMarkup(createMainKeyboard());
             }
         }
     }
 
+    private void handleTeacherSchedule(String teacherName, SendMessage message) {
+        try {
+            boolean isEvenWeek = isEvenWeek();
+            int weekOdd = isEvenWeek ? 2 : 1;
+
+            List<Object> schedule = teacherSchedule.giveSchedule(teacherName, weekOdd); // Новый метод для преподавателя
+            if (schedule.isEmpty()) {
+                message.setText("Расписание для преподавателя не найдено.");
+            } else {
+                String scheduleText = buildScheduleText(schedule, "Преподаватель " + teacherName, 0);
+                message.setText(scheduleText);
+            }
+        } catch (Exception e) {
+            logger.error("Ошибка при получении расписания для преподавателя", e);
+            message.setText("Произошла ошибка при получении расписания.");
+        }
+    }
 
     private void handleGroupInput(String userMessage, SendMessage message, UserSession userSession) {
         try {
-            Integer groupId = groupRepository.findByName(userMessage);
+            // Заменяем пробелы на дефисы
+            String sanitizedGroupName = userMessage.replace(" ", "-").trim();
+
+            // Пытаемся найти группу с изменённым именем
+            Integer groupId = groupRepository.findByName(sanitizedGroupName);
             if (groupId != null) {
-                userSession.groupName = userMessage;
+                userSession.groupName = sanitizedGroupName;
                 userSession.state = UserState.WAITING_FOR_SUBGROUP;
                 message.setText("Группа найдена. \nПожалуйста, укажите номер подгруппы (1 или 2).");
                 message.setReplyMarkup(createSubgroupKeyboard());
@@ -199,28 +231,30 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             // Получаем русское название дня недели
             String dayOfWeekName = dayOfWeek.label;
+            String formattedDay = getFormattedDayWithDate(dayOfWeekName);
 
-            scheduleText.append(String.format("📅 %s:\n", dayOfWeekName));
+            scheduleText.append(String.format("📅 %s:\n", formattedDay));
 
             for (Object item : daySchedule) {
                 if (item instanceof LessonDTO lesson) {
                     scheduleText.append(String.format(
-                            "%d. %s 🎓%s 🚪%s\n",
-                            lesson.getOrdinal() != null ? lesson.getOrdinal() : 0,
-                            lesson.getSubject() != null ? lesson.getSubject() : "Пара отменена ❌",
+                            "%s➡\uFE0F %s 🎓%s 🚪%s\n",
+                            getEmojiForOrdinal(lesson.getOrdinal()),
+                            isCancelledLesson(lesson.getSubject()) ? "Пара отменена ❌" : lesson.getSubject(),
                             lesson.getTeacher() != null ? lesson.getTeacher() : "Не указано",
                             lesson.getLocation() != null ? lesson.getLocation() : "Не указано"
                     ));
                 } else if (item instanceof ReplacementDTO replacement) {
                     scheduleText.append(String.format(
-                            "✏ %d. %s 🎓%s 🚪%s\n",
-                            replacement.getOrdinal() != null ? replacement.getOrdinal() : 0,
-                            replacement.getSubject() != null ? replacement.getSubject() : "Пара отменена ❌",
+                            "%s✏ %s 🎓%s 🚪%s\n",
+                            getEmojiForOrdinal(replacement.getOrdinal()),
+                            isCancelledLesson(replacement.getSubject()) ? "Пара отменена ❌" : replacement.getSubject(),
                             replacement.getTeacher() != null ? replacement.getTeacher() : "Не указано",
                             replacement.getLocation() != null ? replacement.getLocation() : "Не указано"
                     ));
                 }
             }
+
 
             scheduleText.append("\n");
         }
@@ -315,5 +349,41 @@ public class TelegramBot extends TelegramLongPollingBot {
         WeekFields weekFields = WeekFields.of(Locale.getDefault());
         int weekNumber = today.get(weekFields.weekOfWeekBasedYear());
         return weekNumber % 2 == 0;
+    }
+
+    private String getEmojiForOrdinal(Integer ordinal) {
+        String[] numberEmojis = {
+                "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣"
+        };
+        // Если `ordinal` не задан или выходит за пределы массива, вернуть дефолтное значение
+        if (ordinal == null || ordinal < 1 || ordinal > numberEmojis.length) {
+            return "❓"; // Дефолтное значение
+        }
+        return numberEmojis[ordinal - 1]; // Индекс массива начинается с 0
+    }
+
+    private String getFormattedDayWithDate(String dayOfWeekLabel) {
+        // Получаем DayOfWeek из его label
+        org.ytcuber.database.types.DayOfWeek dayOfWeekEnum = org.ytcuber.database.types.DayOfWeek.valueOfLabel(dayOfWeekLabel);
+        if (dayOfWeekEnum == null) {
+            return dayOfWeekLabel; // Возвращаем исходное значение, если день не найден
+        }
+
+        // Получаем java.time.DayOfWeek (1 = Monday, 7 = Sunday)
+        java.time.DayOfWeek targetDay = java.time.DayOfWeek.valueOf(dayOfWeekEnum.name());
+
+        // Текущая дата
+        LocalDate today = LocalDate.now();
+        // Дата текущей недели для указанного дня
+        LocalDate targetDate = today.with(targetDay);
+
+        // Форматируем дату
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        return String.format("%s %s", dayOfWeekLabel, targetDate.format(formatter));
+    }
+
+    // Метод для проверки, является ли пара отменённой
+    private boolean isCancelledLesson(String subject) {
+        return subject == null || subject.equals("------------");
     }
 }

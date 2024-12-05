@@ -10,6 +10,9 @@ import org.ytcuber.initialization.Initialization;
 import org.ytcuber.initialization.InitializationLocations;
 import org.ytcuber.initialization.InitializationReplacement;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -55,10 +58,16 @@ public class AllSchedule {
         groupsToSave.add(group);
         groupRepository.saveAll(groupsToSave);
 
+        // Получаем результат
+        String[] dateRanges = generateWeeklyDateRange();
+
         // Запуск парсинга замен в отдельном потоке
         Callable<Void> replacementTask = () -> {
-            initializationReplacement.processExcelReplacementParse("02.12.24-04.12.24");
-            initializationReplacement.processExcelReplacementParse("05.12.24-07.12.24");
+            initializationReplacement.processExcelReplacementParse(dateRanges[0]);
+            try {
+                initializationReplacement.processExcelReplacementParse(dateRanges[1]);
+            } catch (Exception ignored) { }
+
             return null;
         };
 
@@ -85,32 +94,6 @@ public class AllSchedule {
         } finally {
             executorService.shutdown(); // Закрываем пул потоков
         }
-//
-//        List<Object> as = groupSchedule.giveSchedule("ИСпПК-21-1", 2, 1);
-//
-//        // Красивый вывод результирующего списка
-//        System.out.println("=== Итоговый список уроков и замен ===");
-//        for (Object item : as) {
-//            if (item instanceof LessonDTO lesson) {
-//                System.out.printf(
-//                        "Урок: День недели: %s, Номер: %d, Локация: %s, Предмет: %s, Учитель: %s%n",
-//                        lesson.getDayOfWeek(),
-//                        lesson.getOrdinal(),
-//                        lesson.getLocation(),
-//                        lesson.getSubject(),
-//                        lesson.getTeacher()
-//                );
-//            } else if (item instanceof ReplacementDTO replacement) {
-//                System.out.printf(
-//                        "Замена: День недели: %s, Номер: %d, Локация: %s, Предмет: %s, Учитель: %s%n",
-//                        replacement.getDatOfWeek(),
-//                        replacement.getOrdinal(),
-//                        replacement.getLocation(),
-//                        replacement.getSubject(),
-//                        replacement.getTeacher()
-//                );
-//            }
-//        }
 
 //        // Заполнение замен
 //        initializationReplacement.processExcelReplacementParse("02.12.24-04.12.24");
@@ -124,5 +107,36 @@ public class AllSchedule {
 
 //        Нет субботы у 25, 54, 67, Странная фигня у КС-23-1
 //        String groupName = String.valueOf(groupRepository.findNameById(38)); initialization.processExcelParse(groupName);
+    }
+
+    public static String[] generateWeeklyDateRange() {
+        // Получаем текущую дату
+        LocalDate today = LocalDate.now();
+
+        LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
+
+        // Определяем диапазон для текущей недели
+        LocalDate startDate = startOfWeek;
+        LocalDate endDate = startDate.plusDays(2);
+
+        // Форматируем даты в нужный формат
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yy");
+        String formattedStartDate = startDate.format(formatter);
+        String formattedEndDate = endDate.format(formatter);
+
+        // Генерируем строку диапазона для текущей недели
+        String dateRange = formattedStartDate + "-" + formattedEndDate;
+
+        LocalDate nextStartDate = startOfWeek.plusDays(3);
+        LocalDate nextEndDate = nextStartDate.plusDays(2);
+
+        // Форматируем следующую дату
+        String formattedNextStartDate = nextStartDate.format(formatter);
+        String formattedNextEndDate = nextEndDate.format(formatter);
+
+        // Генерируем строку диапазона для следующего диапазона
+        String nextDateRange = formattedNextStartDate + "-" + formattedNextEndDate;
+
+        return new String[] {dateRange, nextDateRange};
     }
 }
