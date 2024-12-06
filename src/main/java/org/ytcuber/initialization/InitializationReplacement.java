@@ -7,6 +7,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.ytcuber.database.model.Group;
 import org.ytcuber.database.model.Replacement;
@@ -35,6 +36,14 @@ public class InitializationReplacement {
     private ReplacementRepository replacementRepository;
     @Autowired
     private LocationRepository locationRepository;
+
+    @Value("${pathtofloder.files}")
+    private String floderPaths;
+
+    public String getFloderPaths() {
+        return floderPaths;
+    }
+
     @Autowired
     public void ApplicationInitializer(GroupRepository groupRepository, LocationRepository locationRepository) {
         this.groupRepository = groupRepository;
@@ -47,8 +56,9 @@ public class InitializationReplacement {
     }
 
     public void processExcelReplacementParse(String replacementDate) throws IOException, ParseException {
-        String inputFilePath = "./mainexcel/replacement/" + replacementDate + ".xlsx";
+//        String inputFilePath = "./mainexcel/replacement/" + replacementDate + ".xlsx";
 //        String inputFilePath = "/home/ytcuber/site/mainexcel/replacement/" + replacementDate + ".xlsx";
+        String inputFilePath = floderPaths + "/replacement/" + replacementDate + ".xlsx";
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
         minusUnion(inputFilePath);
