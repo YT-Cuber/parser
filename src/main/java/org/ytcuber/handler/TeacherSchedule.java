@@ -40,7 +40,8 @@ public class TeacherSchedule {
                         lesson.getOrdinal(),
                         lesson.getLocation(),
                         lesson.getSubject(),
-                        lesson.getTeacher()
+                        null, // Убираем преподавателя
+                        lesson.getGroup() // Добавляем группу
                 ))
                 .toList();
 
@@ -52,7 +53,8 @@ public class TeacherSchedule {
                         replacement.getOrdinal(),
                         replacement.getLocation(),
                         replacement.getSubject(),
-                        replacement.getTeacher()
+                        null, // Убираем преподавателя
+                        replacement.getGroup() // Добавляем группу
                 ))
                 .toList();
 

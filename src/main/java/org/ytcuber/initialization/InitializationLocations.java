@@ -9,6 +9,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.ytcuber.database.model.Location;
 import org.ytcuber.database.repository.LocationRepository;
@@ -24,6 +25,13 @@ import java.util.List;
 public class InitializationLocations {
     private LocationRepository locationRepository;
 
+    @Value("${pathtofloder.files}")
+    private String floderPaths;
+
+    public String getFloderPaths() {
+        return floderPaths;
+    }
+
     @Autowired
     public void ApplicationInitializer(LocationRepository locationRepository) {
         this.locationRepository = locationRepository;
@@ -35,8 +43,9 @@ public class InitializationLocations {
     }
 
     public void processLocationParse(String fileName) throws IOException {
-        String inputFilePath = "./mainexcel/locations/" + fileName + ".xlsx";
+//        String inputFilePath = "./mainexcel/locations/" + fileName + ".xlsx";
 //        String inputFilePath = "/home/ytcuber/site/mainexcel/locations/" + fileName + ".xlsx";
+        String inputFilePath = floderPaths + "/locations/" + fileName + ".xlsx";
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
 

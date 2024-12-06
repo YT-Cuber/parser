@@ -44,7 +44,8 @@ public class GroupSchedule {
                         lesson.getOrdinal(),
                         lesson.getLocation(),
                         lesson.getSubject(),
-                        lesson.getTeacher()
+                        lesson.getTeacher(),
+                        lesson.getGroup()
                 ))
                 .toList();
 
@@ -55,7 +56,8 @@ public class GroupSchedule {
                         replacement.getOrdinal(),
                         replacement.getLocation(),
                         replacement.getSubject(),
-                        replacement.getTeacher()
+                        replacement.getTeacher(),
+                        replacement.getGroup()
                 ))
                 .toList();
 

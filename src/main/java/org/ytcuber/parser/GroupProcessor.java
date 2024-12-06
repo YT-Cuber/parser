@@ -1,6 +1,7 @@
 package org.ytcuber.parser;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.ytcuber.database.model.Group;
 import org.ytcuber.database.repository.GroupRepository;
@@ -17,14 +18,22 @@ import java.util.List;
 public class GroupProcessor {
     private final GroupRepository groupRepository;
 
+    @Value("${pathtofloder.files}")
+    private String floderPaths;
+
+    public String getFloderPaths() {
+        return floderPaths;
+    }
+
     @Autowired
     public GroupProcessor(GroupRepository groupRepository) {
         this.groupRepository = groupRepository;
     }
 
     public void processGroups(String squadNum) throws IOException {
-        String folderPath = "./mainexcel/squad" + squadNum + "/";
+//        String folderPath = "./mainexcel/squad" + squadNum + "/";
 //        String folderPath = "/home/ytcuber/site/mainexcel/squad" + squadNum + "/";
+        String folderPath = floderPaths + "/squad" + squadNum + "/";
         Path folder = Paths.get(folderPath);
 
         if (!Files.exists(folder) || !Files.isDirectory(folder)) {

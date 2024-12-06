@@ -8,6 +8,7 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.ytcuber.database.model.Group;
 import org.ytcuber.database.model.Lesson;
@@ -29,6 +30,14 @@ public class Initialization {
     private LessonRepository lessonRepository;
     private GroupRepository groupRepository;
     private LocationRepository locationRepository;
+
+    @Value("${pathtofloder.files}")
+    private String floderPaths;
+
+    public String getFloderPaths() {
+        return floderPaths;
+    }
+
     @Autowired
     public void ApplicationInitializer(LessonRepository lessonRepository, GroupRepository groupRepository, LocationRepository locationRepository) {
         this.lessonRepository = lessonRepository;
@@ -46,8 +55,9 @@ public class Initialization {
         Integer squadNum = groupRepository.findSquadByGroupName(groupName);
         Optional<Group> groupId = groupRepository.findByGroupName(groupName);
 
-        String inputFilePath = "./mainexcel/squad" + squadNum + "/" + groupName + ".xlsx";
+//        String inputFilePath = "./mainexcel/squad" + squadNum + "/" + groupName + ".xlsx";
 //        String inputFilePath = "/home/ytcuber/site/mainexcel/squad" + squadNum + "/" + groupName + ".xlsx";
+        String inputFilePath = floderPaths + "/squad" + squadNum + "/" + groupName + ".xlsx";
         XSSFWorkbook myExcelBook = new XSSFWorkbook(new FileInputStream(inputFilePath));
         XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
         minusUnion(inputFilePath); minusUnion(inputFilePath);

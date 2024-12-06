@@ -122,10 +122,13 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
             try {
+                Thread.sleep(55);
                 execute(message); // Отправка сообщения
                 logger.info("Message sent: {}", message.getText());
             } catch (TelegramApiException e) {
                 logger.error("Ошибка при отправке сообщения", e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         }
     }
@@ -134,13 +137,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         switch (userSession.state) {
             case WAITING_FOR_GROUP -> handleGroupInput(userMessage, message, userSession); // Обработка ввода группы
             case WAITING_FOR_SUBGROUP -> {
-                // Заменяем пробелы на дефисы
-                String sanitizedGroupName = userMessage.replace(" ", "-").trim();
-                handleSubgroupInput(sanitizedGroupName, message, userSession); // Обработка ввода подгруппы
+                handleSubgroupInput(userMessage, message, userSession); // Обработка ввода подгруппы
             }
             case WAITING_FOR_TEACHER -> handleTeacherSchedule(userMessage, message); // Новый метод для преподавателя
             default -> {
-
                 message.setText("Неизвестная команда. Используйте кнопки на клавиатуре.");
                 message.setReplyMarkup(createMainKeyboard());
             }
@@ -167,8 +167,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleGroupInput(String userMessage, SendMessage message, UserSession userSession) {
         try {
-            // Заменяем пробелы на дефисы
-            String sanitizedGroupName = userMessage.replace(" ", "-").trim();
+            // Приведение строки к стандартному формату: все в нижнем регистре, пробелы заменяем на дефисы
+            String sanitizedGroupName = userMessage.trim().replaceAll("\\s+", "-").toLowerCase();
 
             // Пытаемся найти группу с изменённым именем
             Integer groupId = groupRepository.findByName(sanitizedGroupName);
@@ -194,9 +194,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                 // Опеределяем четность недели
                 boolean isEvenWeek = isEvenWeek();
                 int weekOdd = isEvenWeek ? 2 : 1;
+                // Заменяем пробелы на дефисы
+                String sanitizedGroupName = userSession.groupName.replace(" ", "-").trim();
                 // Получаем расписание
-                List<Object> schedule = groupSchedule.giveSchedule(userSession.groupName, userSession.subgroup, weekOdd);
-                String scheduleText = buildScheduleText(schedule, userSession.groupName, userSession.subgroup);
+                List<Object> schedule = groupSchedule.giveSchedule(sanitizedGroupName, userSession.subgroup, weekOdd);
+                String scheduleText = buildScheduleText(schedule, sanitizedGroupName, userSession.subgroup);
                 message.setText(scheduleText);
                 message.setReplyMarkup(createMainKeyboard());
             } catch (Exception e) {
@@ -210,6 +212,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private String buildScheduleText(List<Object> schedule, String groupName, int subgroup) {
         Map<DayOfWeek, List<Object>> scheduleByDay = new LinkedHashMap<>();
+
         for (Object item : schedule) {
             DayOfWeek dayOfWeek = null;
             if (item instanceof LessonDTO lesson) {
@@ -238,29 +241,37 @@ public class TelegramBot extends TelegramLongPollingBot {
             for (Object item : daySchedule) {
                 if (item instanceof LessonDTO lesson) {
                     scheduleText.append(String.format(
-                            "%s➡\uFE0F %s 🎓%s 🚪%s\n",
+                            "%s➡\uFE0F %s%s\n",
                             getEmojiForOrdinal(lesson.getOrdinal()),
-                            isCancelledLesson(lesson.getSubject()) ? "Пара отменена ❌" : lesson.getSubject(),
-                            lesson.getTeacher() != null ? lesson.getTeacher() : "Не указано",
-                            lesson.getLocation() != null ? lesson.getLocation() : "Не указано"
+                            isCancelledLesson(lesson.getSubject())
+                                    ? "Пара отменена ❌"
+                                    : lesson.getSubject(),
+                            isCancelledLesson(lesson.getSubject())
+                                    ? ""
+                                    : String.format(" 🎓%s 🚪%s",
+                                    lesson.getTeacher() != null ? lesson.getTeacher() : "Не указано",
+                                    lesson.getLocation() != null ? lesson.getLocation() : "Не указано")
                     ));
                 } else if (item instanceof ReplacementDTO replacement) {
                     scheduleText.append(String.format(
-                            "%s✏ %s 🎓%s 🚪%s\n",
+                            "%s✏ %s%s\n",
                             getEmojiForOrdinal(replacement.getOrdinal()),
-                            isCancelledLesson(replacement.getSubject()) ? "Пара отменена ❌" : replacement.getSubject(),
-                            replacement.getTeacher() != null ? replacement.getTeacher() : "Не указано",
-                            replacement.getLocation() != null ? replacement.getLocation() : "Не указано"
+                            isCancelledLesson(replacement.getSubject())
+                                    ? "Пара отменена ❌"
+                                    : replacement.getSubject(),
+                            isCancelledLesson(replacement.getSubject())
+                                    ? ""
+                                    : String.format(" 🎓%s 🚪%s",
+                                    replacement.getTeacher() != null ? replacement.getTeacher() : "Не указано",
+                                    replacement.getLocation() != null ? replacement.getLocation() : "Не указано")
                     ));
                 }
             }
-
 
             scheduleText.append("\n");
         }
         return scheduleText.toString();
     }
-
 
     private ReplyKeyboardMarkup createMainKeyboard() {
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();

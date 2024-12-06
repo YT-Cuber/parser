@@ -16,7 +16,7 @@ public interface ReplacementRepository extends JpaRepository<Replacement, Long> 
     List<Replacement> findReplacementsByGroupIdAndSubgroup(@Param("groupId") Integer groupId,
                                                            @Param("subgroup") Integer subgroup);
 
-    @Query("SELECT r FROM Replacement r WHERE r.teacher = :teacherName\n" +
+    @Query("SELECT r FROM Replacement r WHERE r.teacher LIKE CONCAT('%', :teacherName, '%')\n" +
             "                       ORDER BY r.datOfWeek, r.ordinal")
     List<Replacement> findReplacementsByTeacherAndOdd(@Param("teacherName") String teacherName);
 }
