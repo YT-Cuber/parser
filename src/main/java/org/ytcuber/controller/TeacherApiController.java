@@ -7,7 +7,6 @@ import org.ytcuber.database.model.Lesson;
 import org.ytcuber.database.model.Replacement;
 import org.ytcuber.database.repository.LessonRepository;
 import org.ytcuber.database.repository.ReplacementRepository;
-
 import java.util.List;
 
 @RestController
