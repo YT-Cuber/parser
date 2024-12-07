@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.*;
 import org.ytcuber.database.model.Lesson;
 import org.ytcuber.database.repository.GroupRepository;
 import org.ytcuber.database.repository.LessonRepository;
-
 import java.util.List;
 
 @RestController
