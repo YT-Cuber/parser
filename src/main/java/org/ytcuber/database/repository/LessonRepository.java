@@ -21,7 +21,13 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     List<Lesson> findLessonsByGroupIdAndSubgroupAndOdd(@Param("groupId") Integer groupId,
                                                           @Param("subgroup") Integer subgroup,
                                                           @Param("odd") Integer odd);
-    @Query("SELECT l FROM Lesson l WHERE l.teacher LIKE CONCAT('%', :teacherName, '%') AND l.odd = :odd " +
+    @Query("SELECT l FROM Lesson l WHERE LOWER(l.teacher) LIKE LOWER(CONCAT('%', :teacherName, '%')) AND l.odd = :odd " +
             "ORDER BY l.dayOfWeek, l.ordinal")
     List<Lesson> findLessonsByTeacherAndOdd(@Param("teacherName") String teacherName, @Param("odd") Integer odd);
+
+    @Query("SELECT l FROM Lesson l WHERE l.teacher LIKE %:teacherName%")
+    List<Lesson> findLessonsByTeacher(@Param("teacherName") String teacherName);
+    
+    @Query("SELECT l FROM Lesson l WHERE l.location = :locationName")
+    List<Lesson> findLessonsByLocation(@Param("locationName") String locationName);
 }
